@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <Rocket/Core/RenderInterface.h>
 
 #include <list>
 #include <memory>
@@ -248,6 +249,53 @@ public:
             break;
         }
     }
+
+    /**
+     * \brief Graphics interface for libRocket
+     * The GuiRenderInterface class provides all the methods for libRocket to
+     * render and generate graphics objects.
+     * see Rocket/Core/RenderInterface.h for a description of the methods use.
+     */
+    class GuiRenderInterface : public Rocket::Core::RenderInterface {
+    public:
+        GuiRenderInterface(RenderSystem *);
+        virtual ~GuiRenderInterface();
+
+        virtual void RenderGeometry(
+            Rocket::Core::Vertex* vertices,
+            int num_vertices,
+            int* indices,
+            int num_indices,
+            Rocket::Core::TextureHandle texture,
+            const Rocket::Core::Vector2f& translation);
+        virtual Rocket::Core::CompiledGeometryHandle CompileGeometry(
+            Rocket::Core::Vertex* vertices,
+            int num_vertices,
+            int* indices,
+            int num_indices,
+            Rocket::Core::TextureHandle texture);
+        virtual void RenderCompiledGeometry(
+            Rocket::Core::CompiledGeometryHandle geometry,
+            const Rocket::Core::Vector2f& translation);
+        virtual void ReleaseCompiledGeometry(
+            Rocket::Core::CompiledGeometryHandle geometry);
+        virtual void EnableScissorRegion(bool enable);
+        virtual void SetScissorRegion(int x, int y, int width, int height);
+        virtual bool LoadTexture(
+            Rocket::Core::TextureHandle& texture_handle,
+            Rocket::Core::Vector2i& texture_dimensions,
+            const Rocket::Core::String& source);
+        virtual bool GenerateTexture(
+            Rocket::Core::TextureHandle& texture_handle,
+            const Rocket::Core::byte* source,
+            const Rocket::Core::Vector2i& source_dimensions);
+        virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
+    private:
+        RenderSystem *system;
+    };
+    GuiRenderInterface * GetGUIInterface() {
+        return gui_interface.get();
+    }
 private:
 
     template<class CT>
@@ -301,6 +349,8 @@ private:
     std::shared_ptr<Shader> depthpassshader;
     std::shared_ptr<CameraBase> camera;
     id_t camera_id;
+
+    std::unique_ptr<GuiRenderInterface> gui_interface;
 
     std::map<RenderCmd, std::function<bool(RenderCommandItem&)>> list_resolvers;
 

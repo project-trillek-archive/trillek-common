@@ -1,0 +1,62 @@
+# FindRocket.cmake
+# Attept to find libRocket - http://librocket.com
+# Copyright (c) 2014, Meisaka Yukara
+
+include(FindPackageHandleStandardArgs)
+
+find_path(ROCKET_INCLUDE_DIR
+	NAMES Rocket/Core.h Rocket/Core/Core.h
+	PATHS /usr/include /usr/local/include /sw/include /opt/local/include
+)
+find_library(ROCKET_CORE_LIBRARY NAMES RocketCore
+	PATH_SUFFIXES x86 lib64 x64
+)
+find_library(ROCKET_CONTROLS_LIBRARY NAMES RocketControls
+	PATH_SUFFIXES x86 lib64 x64
+)
+find_library(ROCKET_DEBUGGER_LIBRARY NAMES RocketDebugger
+	PATH_SUFFIXES x86 lib64 x64
+)
+find_library(ROCKET_CORELUA_LIBRARY NAMES RocketCoreLua
+	PATH_SUFFIXES x86 lib64 x64
+)
+find_library(ROCKET_CONTROLSLUA_LIBRARY NAMES RocketControlsLua
+	PATH_SUFFIXES x86 lib64 x64
+)
+set(ROCKET_LIBRARIES ${ROCKET_CORE_LIBRARY} ${ROCKET_CONTROLS_LIBRARY})
+if(ROCKET_DEBUGGER_LIBRARY)
+	FIND_PACKAGE_MESSAGE(ROCKETDEBUGGER "Found libRocket debugger: ${ROCKET_DEBUGGER_LIBRARY}" "")
+	set(ROCKET_LIBRARIES ${ROCKET_LIBRARIES}
+		${ROCKET_DEBUGGER_LIBRARY}
+	)
+endif()
+if(ROCKET_CORELUA_LIBRARY AND ROCKET_CONTROLSLUA_LIBRARY)
+	set(ROCKET_LIBRARIES ${ROCKET_LIBRARIES}
+		${ROCKET_CORELUA_LIBRARY}
+		${ROCKET_CONTROLSLUA_LIBRARY}
+	)
+endif()
+
+find_package_handle_standard_args(ROCKET "libRocket (http://librocket.com) components were not found"
+	ROCKET_INCLUDE_DIR
+	ROCKET_CORE_LIBRARY
+	ROCKET_CONTROLS_LIBRARY
+)
+find_package_handle_standard_args(ROCKETDEBUGGER DEFAULT_MSG
+	ROCKET_INCLUDE_DIR
+	ROCKET_DEBUGGER_LIBRARY
+)
+find_package_handle_standard_args(ROCKETLUA DEFAULT_MSG
+	ROCKET_INCLUDE_DIR
+	ROCKET_CORELUA_LIBRARY
+	ROCKET_CONTROLSLUA_LIBRARY
+)
+
+mark_as_advanced(
+	ROCKET_INCLUDE_DIR
+	ROCKET_CORE_LIBRARY
+	ROCKET_CONTROLS_LIBRARY
+	ROCKET_DEBUGGER_LIBRARY
+	ROCKET_CORELUA_LIBRARY
+	ROCKET_CONTROLSLUA_LIBRARY
+)

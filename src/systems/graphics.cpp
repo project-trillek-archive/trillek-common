@@ -21,6 +21,7 @@ namespace graphics {
 RenderSystem::RenderSystem() : Parser("graphics") {
     multisample = false;
     this->frame_drop = false;
+    gui_interface.reset(new RenderSystem::GuiRenderInterface(this));
     Shader::InitializeTypes();
 }
 
