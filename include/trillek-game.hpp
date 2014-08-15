@@ -11,6 +11,10 @@
 
 namespace trillek {
 
+namespace gui {
+class GuiSystem;
+}
+
 namespace graphics {
 class RenderSystem;
 }
@@ -41,6 +45,11 @@ public:
      *
      */
     static graphics::RenderSystem& GetGraphicSystem();
+
+    /**
+     * Get a reference to the GUI system
+     */
+    static gui::GuiSystem& GetGUISystem();
 
     /** \brief Return the graphic system instance pointer
      *
@@ -102,6 +111,7 @@ private:
     static OS glfw_os;
     static std::once_flag once_graphics;
     static std::shared_ptr<graphics::RenderSystem> gl_sys_ptr;
+    static std::unique_ptr<gui::GuiSystem> gui_system;
     static physics::PhysicsSystem phys_sys;
     static MetaEngineSystem engine_sys;
     static bool close_window;

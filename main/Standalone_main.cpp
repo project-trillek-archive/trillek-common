@@ -8,6 +8,7 @@
 #include "systems/resource-system.hpp"
 #include "systems/meta-engine-system.hpp"
 #include "systems/sound-system.hpp"
+#include "systems/gui.hpp"
 #include <cstddef>
 
 size_t gAllocatedSize = 0;
@@ -43,6 +44,8 @@ int main(int argCount, char **argValues) {
     }
     // start the graphic system
     trillek::TrillekGame::GetGraphicSystem().Start(os.GetWindowWidth(), os.GetWindowHeight());
+
+    trillek::TrillekGame::GetGUISystem().Start();
 
     // we register the systems in this queue
     std::queue<trillek::SystemBase*> systems;
