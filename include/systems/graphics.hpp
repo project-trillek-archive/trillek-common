@@ -30,6 +30,9 @@ namespace trillek {
 
 class Transform;
 
+namespace gui {
+class GuiSystem;
+}
 namespace graphics {
 
 enum class RenderCmd : unsigned int;
@@ -351,9 +354,11 @@ private:
     id_t camera_id;
 
     std::unique_ptr<GuiRenderInterface> gui_interface;
+    uint32_t current_ref;
 
     std::map<RenderCmd, std::function<bool(RenderCommandItem&)>> list_resolvers;
 
+    std::map<uint32_t, std::shared_ptr<GraphicsBase>> graphics_references;
     std::map<unsigned int, std::map<std::string, std::shared_ptr<GraphicsBase>>> graphics_instances;
     std::map<unsigned int, glm::mat4> model_matrices;
     std::list<MaterialGroup> material_groups;

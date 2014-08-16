@@ -66,6 +66,15 @@ void Texture::Load(const resource::PixelBuffer & image) {
     CheckGLError();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+void Texture::Load(const uint8_t * image, GLuint width, GLuint height) {
+    CheckGLError();
+    if(!texture_id) {
+        return;
+    }
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    CheckGLError();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+}
 void Texture::Generate(GLuint width, GLuint height, bool usealpha) {
     CheckGLError();
     if(!texture_id) {

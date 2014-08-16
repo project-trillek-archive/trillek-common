@@ -3,6 +3,7 @@
 #include "systems/graphics.hpp"
 #include "systems/resource-system.hpp"
 #include "systems/transform-system.hpp"
+#include "systems/gui.hpp"
 #include "resources/text-file.hpp"
 #include "resources/md5mesh.hpp"
 #include "resources/mesh.hpp"
@@ -19,9 +20,10 @@ namespace trillek {
 namespace graphics {
 
 RenderSystem::RenderSystem() : Parser("graphics") {
-    multisample = false;
+    this->multisample = false;
     this->frame_drop = false;
-    gui_interface.reset(new RenderSystem::GuiRenderInterface(this));
+    this->current_ref = 1;
+    this->gui_interface.reset(new RenderSystem::GuiRenderInterface(this));
     Shader::InitializeTypes();
 }
 
@@ -194,6 +196,9 @@ void RenderSystem::RegisterListResolvers() {
                         }
                     }
                 }
+            }
+            else if(rentype == "gui") {
+                rlist.run_values.push_back(Container((long)4));
             }
             else {
                 LOGMSGON(ERROR, rensys) << "Invalid render method";
@@ -371,6 +376,9 @@ void RenderSystem::RenderScene() const {
                     }
                     RenderPostPass(postshader);
                 }
+                    break;
+                case 4:
+                    TrillekGame::GetGUISystem().InvokeRender();
                     break;
                 default:
                     break;
@@ -963,6 +971,7 @@ void RenderSystem::HandleEvents(const frame_tp& timepoint) {
             this->frame_drop_count = 0;
         }
         this->frame_drop = false;
+        TrillekGame::GetGUISystem().Update();
     }
     last_tp = now;
     for (auto ren : this->renderables) {

@@ -32,7 +32,9 @@ public:
         dd->RemoveReference();
     }
 };
+typedef std::unique_ptr<Rocket::Core::ElementDocument, DocumentUnloader> unique_doc_ptr;
 class GuiSystem : public Rocket::Core::SystemInterface {
+    friend class graphics::RenderSystem;
 public:
     GuiSystem(OS &sys, graphics::RenderSystem &gsys) :
         opsystem(sys), grsystem(gsys) {}
@@ -42,12 +44,16 @@ public:
     virtual bool LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::String& message);
 
     void Start();
-
+    void LoadDocument(const std::string &);
+    void LoadFont(const std::string &);
 private:
+    void Update();
+    void InvokeRender();
+
     OS &opsystem;
     graphics::RenderSystem &grsystem;
     std::unique_ptr<Rocket::Core::Context, ReferenceDeleter> main_context;
-    std::vector<std::unique_ptr<Rocket::Core::ElementDocument, DocumentUnloader>> documents;
+    std::vector<unique_doc_ptr> documents;
 };
 
 } // namespace gui

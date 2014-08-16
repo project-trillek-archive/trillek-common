@@ -39,7 +39,24 @@ bool GuiSystem::LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::Str
     }
     return true;
 }
-
+void GuiSystem::Update() {
+    this->main_context->Update();
+}
+void GuiSystem::InvokeRender() {
+    this->main_context->Render();
+}
+void GuiSystem::LoadDocument(const std::string &docname) {
+    Rocket::Core::ElementDocument *elemdoc = this->main_context->LoadDocument(docname.c_str());
+    if(elemdoc != nullptr) {
+        elemdoc->Show();
+        this->documents.push_back(unique_doc_ptr(elemdoc));
+    } else {
+        return; // failed
+    }
+}
+void GuiSystem::LoadFont(const std::string &fname) {
+    Rocket::Core::FontDatabase::LoadFontFace(fname.c_str());
+}
 void GuiSystem::Start() {
     Rocket::Core::SetSystemInterface(this);
     Rocket::Core::SetRenderInterface(this->grsystem.GetGUIInterface());
