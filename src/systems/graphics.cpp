@@ -503,23 +503,28 @@ void RenderSystem::RenderScene() const {
 void RenderSystem::RenderGUI() const {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_MULTISAMPLE);
+    glDisable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ZERO);
     this->guisysshader->Use();
     float pxwidth, pxheight;
     if(!window_width) {
         pxwidth = 1.0f;
     }
     else {
-        pxwidth = 1.0f / ((float)window_width);
+        pxwidth = 1.0f / ((float)1024);
     }
     if(!window_height) {
         pxheight = 1.0f;
     }
     else {
-        pxheight = 1.0f / ((float)window_height);
+        pxheight = 1.0f / ((float)768);
     }
-    glUniform1f(this->guisysshader->Uniform("pxwidth"), pxwidth);
-    glUniform1f(this->guisysshader->Uniform("pxheight"), pxheight);
+    glUniform2f(this->guisysshader->Uniform("pxscreen"), pxwidth, pxheight);
+    glUniform1i(this->guisysshader->Uniform("in_sampl"), 0);
+    glUniform1i(this->guisysshader->Uniform("on_tex1"), 1);
     TrillekGame::GetGUISystem().InvokeRender();
+    glDisable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ZERO);
 }
 
 void RenderSystem::RenderColorPass(const float *view_matrix, const float *proj_matrix) const {

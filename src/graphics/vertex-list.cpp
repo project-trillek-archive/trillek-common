@@ -42,6 +42,7 @@ void VertexList::Release() {
 }
 void VertexList::Bind() {
     glBindVertexArray(this->vao);
+    glBindBuffer(GL_ARRAY_BUFFER, this->buf[0]); // Bind the vertex buffer.
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->buf[1]); // Bind the index buffer.
     CheckGLError();
 }
@@ -135,10 +136,10 @@ void VertexList::Configure() {
         glEnableVertexAttribArray(0);
         offset = ((float*)offset) + 2; // move to the next attribute offset
         glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, vertexsize, (GLvoid*)offset);
-        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(1);
         offset = ((uint32_t*)offset) + 1;
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vertexsize, (GLvoid*)offset);
-        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(2);
         break;
     default:
         break;

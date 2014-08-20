@@ -81,6 +81,12 @@ bool Shader::LinkProgram() {
         program = glCreateProgram(); CheckGLError();
         SetOutputBinding(ShaderOutputType::DEFAULT_TARGETS);
     }
+    if(attr_bindings.size() > 0) {
+        for(auto& bindpair : attr_bindings) {
+            glBindAttribLocation(program, bindpair.second, bindpair.first.c_str());
+            CheckGLError();
+        }
+    }
 
     // attach all shaders
     for(auto shaderid_itr : shaders) {
@@ -298,6 +304,21 @@ bool Shader::Parse(const std::string &shader_name, const rapidjson::Value& node)
                     else {
                         // invalid
                         LOGMSGC(ERROR) << "Invalid output definition";
+                        return false;
+                    }
+                }
+            }
+            else if(param_name == "attrbinding") {
+                for(auto sdef_itr = shade_param_itr->value.MemberBegin();
+                        sdef_itr != shade_param_itr->value.MemberEnd(); sdef_itr++) {
+                    std::string bind_name(sdef_itr->name.GetString(), sdef_itr->name.GetStringLength());
+                    if(sdef_itr->value.IsUint()) {
+                        GLuint bindid = sdef_itr->value.GetUint();
+                        attr_bindings.push_back(std::pair<std::string, GLuint>(bind_name, bindid));
+                    }
+                    else {
+                        // invalid
+                        LOGMSGC(ERROR) << "Invalid input definition";
                         return false;
                     }
                 }

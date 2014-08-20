@@ -35,10 +35,10 @@ Rocket::Core::CompiledGeometryHandle RenderSystem::GuiRenderInterface::CompileGe
     glBindVertexArray(0);
     refid = this->system->Add(std::shared_ptr<VertexList>(vxl));
     renid = renderset.size() + 1;
-    renderset.push_back(20);
-    renderset.push_back(static_cast<uint32_t>(texture));
     renderset.push_back(21);
     renderset.push_back(refid);
+    renderset.push_back(20);
+    renderset.push_back(static_cast<uint32_t>(texture));
     renderset.push_back(10);
     renderset.push_back(num_indices);
     renderset.push_back(5);
@@ -65,7 +65,9 @@ void RenderSystem::GuiRenderInterface::RenderCompiledGeometry(
                     }
                 }
             }
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, refid);
+            glBindSampler(0,0);
             break;
         case 21:
             if(++renid < renderset.size()) {
