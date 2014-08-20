@@ -378,7 +378,7 @@ void RenderSystem::RenderScene() const {
                 }
                     break;
                 case 4:
-                    TrillekGame::GetGUISystem().InvokeRender();
+                    RenderGUI();
                     break;
                 default:
                     break;
@@ -498,6 +498,28 @@ void RenderSystem::RenderScene() const {
             }
         }
     }
+}
+
+void RenderSystem::RenderGUI() const {
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_MULTISAMPLE);
+    this->guisysshader->Use();
+    float pxwidth, pxheight;
+    if(!window_width) {
+        pxwidth = 1.0f;
+    }
+    else {
+        pxwidth = 1.0f / ((float)window_width);
+    }
+    if(!window_height) {
+        pxheight = 1.0f;
+    }
+    else {
+        pxheight = 1.0f / ((float)window_height);
+    }
+    glUniform1f(this->guisysshader->Uniform("pxwidth"), pxwidth);
+    glUniform1f(this->guisysshader->Uniform("pxheight"), pxheight);
+    TrillekGame::GetGUISystem().InvokeRender();
 }
 
 void RenderSystem::RenderColorPass(const float *view_matrix, const float *proj_matrix) const {
@@ -741,6 +763,9 @@ void RenderSystem::RegisterStaticParsers() {
                 }
                 else if(settingname == "depth-shader") {
                     rensys.depthpassshader = rensys.Get<Shader>(settingval);
+                }
+                else if(settingname == "gui-shader") {
+                    rensys.guisysshader = rensys.Get<Shader>(settingval);
                 }
             }
         }

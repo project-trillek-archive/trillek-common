@@ -105,6 +105,8 @@ public:
      */
     void RenderPostPass(std::shared_ptr<Shader>) const;
 
+    void RenderGUI() const;
+
     /**
      * \brief Causes an update in the system based on the change in time.
      *
@@ -236,6 +238,7 @@ public:
      */
     uint32_t Add(std::shared_ptr<GraphicsBase> instanceptr) {
         uint32_t obj_id = current_ref++;
+        if(!obj_id) obj_id = current_ref++; // must not be zero
         graphics_references[obj_id] = instanceptr;
         return obj_id;
     }
@@ -311,6 +314,7 @@ public:
         virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
     private:
         RenderSystem *system;
+        std::vector<uint32_t> renderset;
     };
     GuiRenderInterface * GetGUIInterface() {
         return gui_interface.get();
@@ -366,6 +370,7 @@ private:
     std::shared_ptr<RenderList> activerender;
     std::shared_ptr<Shader> lightingshader;
     std::shared_ptr<Shader> depthpassshader;
+    std::shared_ptr<Shader> guisysshader;
     std::shared_ptr<CameraBase> camera;
     id_t camera_id;
 

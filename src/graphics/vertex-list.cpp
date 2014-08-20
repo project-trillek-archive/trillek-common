@@ -42,10 +42,10 @@ void VertexList::Release() {
 }
 void VertexList::Bind() {
     glBindVertexArray(this->vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->buf[1]); // Bind the index buffer.
     CheckGLError();
 }
 void VertexList::Configure() {
-    glBindVertexArray(this->vao);
     CheckGLError();
 
     void *offset = nullptr;
@@ -129,7 +129,7 @@ void VertexList::Configure() {
         offset = ((float*)offset) + 4;
         break;
     case VEC2D_CT:
-        vertexsize = sizeof(float) * 2 + sizeof(uint32_t);
+        vertexsize = sizeof(float) * (2+2) + sizeof(uint32_t);
         // 2 position, 4 color(byte), 2 texcoord
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, vertexsize, (GLvoid*)offset);
         glEnableVertexAttribArray(0);
