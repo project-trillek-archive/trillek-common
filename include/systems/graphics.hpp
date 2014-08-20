@@ -215,6 +215,14 @@ public:
         }
         return std::static_pointer_cast<T>(instance_ptr->second);
     }
+    template<class T>
+    std::shared_ptr<T> Get(uint32_t instanceid) const {
+        auto instance_ptr = this->graphics_references.find(instanceid);
+        if(instance_ptr == this->graphics_references.end()) {
+            return std::shared_ptr<T>();
+        }
+        return std::static_pointer_cast<T>(instance_ptr->second);
+    }
     /**
      * \brief Adds a graphics object to the system.
      */
@@ -222,6 +230,14 @@ public:
     void Add(const std::string & instancename, std::shared_ptr<T> instanceptr) {
         unsigned int type_id = reflection::GetTypeID<T>();
         graphics_instances[type_id][instancename] = instanceptr;
+    }
+    /**
+     * \brief Adds a graphics object to the system.
+     */
+    uint32_t Add(std::shared_ptr<GraphicsBase> instanceptr) {
+        uint32_t obj_id = current_ref++;
+        graphics_references[obj_id] = instanceptr;
+        return obj_id;
     }
 
     struct BufferTri {
