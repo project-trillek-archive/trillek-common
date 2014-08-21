@@ -22,6 +22,7 @@
 #include "graphics/material.hpp"
 #include "graphics/render-layer.hpp"
 #include "graphics/texture.hpp"
+#include "graphics/vertex-list.hpp"
 #include <map>
 #include "systems/dispatcher.hpp"
 #include "os.hpp"
@@ -242,6 +243,12 @@ public:
         graphics_references[obj_id] = instanceptr;
         return obj_id;
     }
+    void Remove(uint32_t instanceid) {
+        auto instance_ptr = this->graphics_references.find(instanceid);
+        if(instance_ptr != this->graphics_references.end()) {
+            this->graphics_references.erase(instance_ptr);
+        }
+    }
 
     struct BufferTri {
         BufferTri() : vao(0), vbo(0), ibo(0) { }
@@ -349,7 +356,8 @@ private:
     ViewMatrixSet vp_right;
     //glm::mat4 projection_matrix;
     //glm::mat4 view_matrix;
-    BufferTri screenquad; /// the full screen quad, used for much graphics effects
+    VertexList screen_quad;
+    //BufferTri screenquad; /// the full screen quad, used for much graphics effects
 
     unsigned int window_width; // Store the width of our window
     unsigned int window_height; // Store the height of our window

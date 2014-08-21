@@ -4,11 +4,17 @@
 #include "trillek.hpp"
 #include "graphics/texture.hpp"
 #include "graphics/vertex-list.hpp"
+#include "graphics/shader.hpp"
 #include "logging.hpp"
 
 namespace trillek {
 namespace graphics {
 
+struct GUIVertex {
+    float x, y;
+    float ts, tt;
+    uint8_t c[4];
+};
 RenderSystem::GuiRenderInterface::GuiRenderInterface(RenderSystem * parent) {
     this->system = parent;
 }
@@ -26,28 +32,71 @@ Rocket::Core::CompiledGeometryHandle RenderSystem::GuiRenderInterface::CompileGe
         Rocket::Core::TextureHandle texture) {
     LOGMSGFOR(INFO, RenderSystem) << "Compile geometry " << num_vertices << ", " << num_indices << ", " << static_cast<uint32_t>(texture);
     VertexList * vxl = new VertexList();
-    vxl->SetFormat(VertexList::VEC2D_CT);
+    vxl->SetFormat(VertexList::VEC4D_C);
     uint32_t refid, renid;
+    std::vector<GUIVertex> guiverts;
+    std::vector<uint32_t> guiinds;
+    uint32_t baseindex = 0;
+    int i, sz;
+
+    baseindex = guiverts.size();
+    for(i = 0; i < num_vertices; i++) {
+        GUIVertex v;
+        v.x = vertices[i].position.x;
+        v.y = vertices[i].position.y;
+        v.c[0] = vertices[i].colour.red;
+        v.c[1] = vertices[i].colour.green;
+        v.c[2] = vertices[i].colour.blue;
+        v.c[3] = vertices[i].colour.alpha;
+        v.ts = vertices[i].tex_coord.x;
+        v.tt = vertices[i].tex_coord.y;
+        guiverts.push_back(v);
+    }
+    for(i = 0; i < num_indices; i++) {
+        guiinds.push_back(indices[i] + baseindex);
+    }
     vxl->Generate();
-    vxl->LoadVertexData(vertices, sizeof(Rocket::Core::Vertex), (uint32_t)num_vertices);
+    vxl->LoadVertexData(guiverts.data(), sizeof(GUIVertex), guiverts.size());
     vxl->Configure();
-    vxl->LoadIndexData((uint32_t*)indices, (uint32_t)num_indices);
+    vxl->LoadIndexData(guiinds.data(), guiinds.size());
     glBindVertexArray(0);
     refid = this->system->Add(std::shared_ptr<VertexList>(vxl));
-    renid = renderset.size() + 1;
-    renderset.push_back(21);
-    renderset.push_back(refid);
-    renderset.push_back(20);
-    renderset.push_back(static_cast<uint32_t>(texture));
-    renderset.push_back(10);
-    renderset.push_back(num_indices);
-    renderset.push_back(5);
+    sz = renderset.size();
+    renid = 0;
+    for(i = 0; i < sz; i++) {
+        if(renderset[i] == 0xffffffff) {
+            renid = i;
+            break;
+        }
+    }
+    if(renid) {
+        LOGMSGFOR(INFO, RenderSystem) << "Reusing renderset";
+        renderset[renid  ] = 21;
+        renderset[renid+1] = refid;
+        renderset[renid+2] = 20;
+        renderset[renid+3] = static_cast<uint32_t>(texture);
+        renderset[renid+4] = 10;
+        renderset[renid+5] = guiinds.size();
+        renderset[renid+6] = 5;
+        renid++;
+    }
+    else {
+        renid = renderset.size() + 1;
+        renderset.push_back(21);
+        renderset.push_back(refid);
+        renderset.push_back(20);
+        renderset.push_back(static_cast<uint32_t>(texture));
+        renderset.push_back(10);
+        renderset.push_back(guiinds.size());
+        renderset.push_back(5);
+    }
     return static_cast<Rocket::Core::CompiledGeometryHandle>(renid);
 }
 void RenderSystem::GuiRenderInterface::RenderCompiledGeometry(
         Rocket::Core::CompiledGeometryHandle geometry, const Rocket::Core::Vector2f& translation) {
     uint32_t refid, renid, ccode;
     renid = static_cast<uint32_t>(geometry) - 1;
+    glUniform2f(system->guisysshader->Uniform("pxofs"), translation.x, translation.y);
     ccode = renderset[renid];
     while(renid < renderset.size() && ccode != 0 && ccode != 5) {
         switch(ccode) {
@@ -64,6 +113,12 @@ void RenderSystem::GuiRenderInterface::RenderCompiledGeometry(
                         refid = 0;
                     }
                 }
+            }
+            if(!refid) {
+                glUniform1i(system->guisysshader->Uniform("on_tex1"), 0);
+            }
+            else {
+                glUniform1i(system->guisysshader->Uniform("on_tex1"), 1);
             }
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, refid);
@@ -98,6 +153,17 @@ void RenderSystem::GuiRenderInterface::RenderCompiledGeometry(
 void RenderSystem::GuiRenderInterface::ReleaseCompiledGeometry(
         Rocket::Core::CompiledGeometryHandle geometry) {
     LOGMSGFOR(DEBUG, RenderSystem) << "Release-CGeometry";
+    uint32_t refid, renid, ccode;
+    renid = static_cast<uint32_t>(geometry) - 1;
+    ccode = renderset[renid + 1];
+    this->system->Remove(ccode);
+    renderset[renid  ] = 0xffffffff;
+    renderset[renid+1] = 0;
+    renderset[renid+2] = 0;
+    renderset[renid+3] = 0;
+    renderset[renid+4] = 0;
+    renderset[renid+5] = 0;
+    renderset[renid+6] = 0;
 }
 void RenderSystem::GuiRenderInterface::EnableScissorRegion(bool enable) {
     //LOGMSGFOR(DEBUG, RenderSystem) << "E Scissor Region " << (enable ? "true" : "false");

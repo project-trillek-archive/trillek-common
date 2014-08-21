@@ -1,5 +1,6 @@
 
 #include <Rocket/Core.h>
+#include <Rocket/Controls.h>
 
 #include "os.hpp"
 #include "trillek-game.hpp"
@@ -39,6 +40,20 @@ bool GuiSystem::LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::Str
     }
     return true;
 }
+void GuiSystem::Notify(const KeyboardEvent* key_event) {
+}
+void GuiSystem::Notify(const MouseBtnEvent* mouse_event) {
+    if(mouse_event->action == MouseBtnEvent::DOWN) {
+        this->main_context->ProcessMouseButtonDown(mouse_event->button, 0);
+    }
+    else if(mouse_event->action == MouseBtnEvent::UP) {
+        this->main_context->ProcessMouseButtonUp(mouse_event->button, 0);
+    }
+}
+void GuiSystem::Notify(const MouseMoveEvent* mouse_event) {
+    this->main_context->ProcessMouseMove(mouse_event->new_x, mouse_event->new_y, 0);
+}
+
 void GuiSystem::Update() {
     this->main_context->Update();
 }
@@ -61,8 +76,13 @@ void GuiSystem::Start() {
     Rocket::Core::SetSystemInterface(this);
     Rocket::Core::SetRenderInterface(this->grsystem.GetGUIInterface());
     Rocket::Core::Initialise();
+    Rocket::Controls::Initialise();
 
     this->main_context.reset(Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(1024, 768)));
+    event::Dispatcher<KeyboardEvent>::GetInstance()->Subscribe(this);
+    event::Dispatcher<MouseBtnEvent>::GetInstance()->Subscribe(this);
+    event::Dispatcher<MouseMoveEvent>::GetInstance()->Subscribe(this);
 }
+
 } // namespace gui
 } // namespace trillek

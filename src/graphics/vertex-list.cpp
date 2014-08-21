@@ -1,5 +1,6 @@
 
 #include "graphics/vertex-list.hpp"
+#include "logging.hpp"
 
 namespace trillek {
 namespace graphics {
@@ -12,6 +13,8 @@ VertexList::VertexList()
     vertexsize = 0;
 }
 VertexList::~VertexList() {
+    LOGMSGC(DEBUG) << "~VertexList()";
+    Release();
 }
 
 bool VertexList::SystemStart(const std::list<Property> &) {

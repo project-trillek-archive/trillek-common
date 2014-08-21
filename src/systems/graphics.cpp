@@ -86,24 +86,12 @@ const int* RenderSystem::Start(const unsigned int width, const unsigned int heig
     };
     uint16_t quadindicies[] = { 0, 2, 1, 1, 2, 3 };
     const unsigned QUADVERTSIZE = sizeof(float) * 4;
-    glGenVertexArrays(1, &screenquad.vao); // Generate the VAO
-    glGenBuffers(1, &screenquad.vbo); // Generate the vertex buffer.
-    glGenBuffers(1, &screenquad.ibo); // Generate the element buffer.
 
-    glBindVertexArray(screenquad.vao); CheckGLError(); // Bind the VAO
-
-    glBindBuffer(GL_ARRAY_BUFFER, screenquad.vbo); CheckGLError(); // Bind the vertex buffer.
-
-    // Store the verts in the buffer.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quaddata), quaddata, GL_STATIC_DRAW); CheckGLError();
-
-    // Set the layout for the shaders
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, QUADVERTSIZE, (GLvoid*)0);
-    glEnableVertexAttribArray(0); CheckGLError();
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, screenquad.ibo); // Bind the element buffer.
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadindicies), quadindicies, GL_STATIC_DRAW);
-    CheckGLError();
+    screen_quad.SetFormat(VertexList::VEC4D);
+    screen_quad.Generate();
+    screen_quad.LoadVertexData(quaddata, QUADVERTSIZE, 4);
+    screen_quad.Configure();
+    screen_quad.LoadIndexData((uint32_t*)quadindicies, 3);
 
     glBindVertexArray(0); CheckGLError(); // unbind VAO when done
 
@@ -503,21 +491,21 @@ void RenderSystem::RenderScene() const {
 void RenderSystem::RenderGUI() const {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_MULTISAMPLE);
-    glDisable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ZERO);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA);
     this->guisysshader->Use();
     float pxwidth, pxheight;
     if(!window_width) {
         pxwidth = 1.0f;
     }
     else {
-        pxwidth = 1.0f / ((float)1024);
+        pxwidth = 1.0f / ((float)window_width);
     }
     if(!window_height) {
         pxheight = 1.0f;
     }
     else {
-        pxheight = 1.0f / ((float)768);
+        pxheight = 1.0f / ((float)window_height);
     }
     glUniform2f(this->guisysshader->Uniform("pxscreen"), pxwidth, pxheight);
     glUniform1i(this->guisysshader->Uniform("in_sampl"), 0);
@@ -636,7 +624,8 @@ void RenderSystem::RenderDepthOnlyPass(const float *view_matrix, const float *pr
 }
 
 void RenderSystem::RenderLightingPass(const glm::mat4x4 &view_matrix, const float *inv_proj_matrix) const {
-    glBindVertexArray(screenquad.vao); CheckGLError();
+    //glBindVertexArray(screenquad.vao); CheckGLError();
+    screen_quad.Bind();
     GLint l_pos_loc = 0;
     GLint l_dir_loc = 0;
     GLint l_col_loc = 0;
@@ -743,7 +732,8 @@ void RenderSystem::UpdateModelMatrices() {
 
 void RenderSystem::RenderPostPass(std::shared_ptr<Shader> postshader) const {
     postshader->Use();
-    glBindVertexArray(screenquad.vao); CheckGLError();
+    //glBindVertexArray(screenquad.vao); CheckGLError();
+    screen_quad.Bind();
     glUniform1i(postshader->Uniform("layer0"), 0);CheckGLError();
     glUniform1i(postshader->Uniform("layer1"), 1);CheckGLError();
     glUniform1i(postshader->Uniform("layer2"), 2);CheckGLError();

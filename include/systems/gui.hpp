@@ -33,7 +33,10 @@ public:
     }
 };
 typedef std::unique_ptr<Rocket::Core::ElementDocument, DocumentUnloader> unique_doc_ptr;
-class GuiSystem : public Rocket::Core::SystemInterface {
+class GuiSystem : public Rocket::Core::SystemInterface,
+    public event::Subscriber<KeyboardEvent>,
+    public event::Subscriber<MouseBtnEvent>,
+    public event::Subscriber<MouseMoveEvent> {
     friend class graphics::RenderSystem;
 public:
     GuiSystem(OS &sys, graphics::RenderSystem &gsys) :
@@ -46,6 +49,10 @@ public:
     void Start();
     void LoadDocument(const std::string &);
     void LoadFont(const std::string &);
+
+    void Notify(const KeyboardEvent*);
+    void Notify(const MouseBtnEvent*);
+    void Notify(const MouseMoveEvent*);
 private:
     void Update();
     void InvokeRender();
