@@ -33,7 +33,9 @@ public:
         VEC3D_NCT,
         VEC3D_NfCTW,
         VEC3D_NfCT,
-        VEC2D_CT
+        VEC2D_CT,
+        VEC4D_C,
+        VEC4D,
     };
     void SetFormat(VECTOR_FORMAT f) {
         this->format = f;
@@ -41,7 +43,7 @@ public:
 private:
     void Generate();
     void Release();
-    void Bind();
+    void Bind() const;
     void Configure();
     void LoadVertexData(void *, uint32_t size, uint32_t count);
     void LoadIndexData(uint32_t *, uint32_t count);

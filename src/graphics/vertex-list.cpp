@@ -32,6 +32,8 @@ void VertexList::Generate() {
         glGenBuffers(2, this->buf);
         CheckGLError();
     }
+    glBindVertexArray(this->vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->buf[1]); // Bind the index buffer.
 }
 void VertexList::Release() {
     if(this->vao) {
@@ -40,9 +42,8 @@ void VertexList::Release() {
         this->vao = 0;
     }
 }
-void VertexList::Bind() {
+void VertexList::Bind() const {
     glBindVertexArray(this->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, this->buf[0]); // Bind the vertex buffer.
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->buf[1]); // Bind the index buffer.
     CheckGLError();
 }
@@ -140,6 +141,21 @@ void VertexList::Configure() {
         offset = ((uint32_t*)offset) + 1;
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vertexsize, (GLvoid*)offset);
         glEnableVertexAttribArray(2);
+        break;
+    case VEC4D_C:
+        vertexsize = sizeof(float) * (4) + sizeof(uint32_t);
+        // 4 position, 4 color(byte)
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, vertexsize, (GLvoid*)offset);
+        glEnableVertexAttribArray(0);
+        offset = ((float*)offset) + 4; // move to the next attribute offset
+        glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, vertexsize, (GLvoid*)offset);
+        glEnableVertexAttribArray(1);
+        break;
+    case VEC4D:
+        vertexsize = sizeof(float) * (4);
+        // 4 position
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, vertexsize, (GLvoid*)offset);
+        glEnableVertexAttribArray(0);
         break;
     default:
         break;
