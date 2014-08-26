@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <list>
+#include <mutex>
 
 #include "dispatcher.hpp"
 #include "os-event.hpp"
@@ -122,7 +123,11 @@ private:
      */
     void RegisterTypes();
 
+    std::list<KeyboardEvent> event_key;
+    std::list<MouseBtnEvent> event_mbtn;
+    std::list<MouseMoveEvent> event_mmove;
     lua_State* L;
+    std::mutex Lm;
     frame_unit delta; // The time since the last HandleEvents was called.
     std::map<int, std::list<std::string>> event_handlers; // Mapping of event ID to script function.
 };

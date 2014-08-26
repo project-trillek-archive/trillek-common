@@ -167,6 +167,8 @@ public:
      */
     void ToggleMouseLock();
 
+    bool IsMouseLocked() { return mouse_lock; }
+
     /**
      * \brief Sets the mouse cursor position relative to the upper-left corner of the window.
      *

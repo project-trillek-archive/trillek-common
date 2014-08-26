@@ -20,6 +20,13 @@ int ToggleMouseLock(lua_State* L) {
     return 0;
 }
 
+int GetMouseLock(lua_State* L) {
+    auto os = luaW_check<OS>(L, 1);
+    luaU_push<bool>(L, os->IsMouseLocked());
+
+    return 1;
+}
+
 int CallWindowShouldClose(lua_State* L) {
     auto os = luaW_check<OS>(L, 1);
     os->SetWindowShouldClose();
@@ -36,6 +43,7 @@ static luaL_Reg OS_table[] =
 static luaL_Reg OS_metatable[] =
 {
     { "ToggleMouseLock", ToggleMouseLock },
+    { "GetMouseLock", GetMouseLock },
     { "Terminate", CallWindowShouldClose },
     { nullptr, nullptr } // table end marker
 };

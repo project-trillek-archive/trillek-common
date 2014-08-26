@@ -1,4 +1,5 @@
 #include "systems/lua-system.hpp"
+#include "logging.hpp"
 #include <iostream>
 
 namespace trillek {
@@ -47,11 +48,114 @@ void LuaSystem::HandleEvents(const frame_tp& timepoint) {
     static frame_tp last_tp;
     this->delta = timepoint - last_tp;
     last_tp = timepoint;
-    // Call the Update method from Lua. A time delta is passed in.
     if (this->L) {
-        //lua_getglobal(L, "Update");
-        //lua_pushnumber(L, delta.count() * 1.0E-9);
-        //lua_pcall(L, 1, 0, 0);
+        // Call the registered event handlers in Lua.
+        auto evh_itr = this->event_handlers.find(reflection::GetTypeID<KeyboardEvent>());
+        if(evh_itr != this->event_handlers.end()) {
+            this->Lm.lock();
+            auto key_event = this->event_key.begin();
+            for( ;key_event != this->event_key.end(); key_event++) {
+                for(auto& handler : evh_itr->second) {
+                    lua_getglobal(L, handler.c_str());
+                    if(key_event->action == KeyboardEvent::KEY_DOWN) {
+                        lua_pushstring(L, "Down");
+                    }
+                    else if(key_event->action == KeyboardEvent::KEY_UP) {
+                        lua_pushstring(L, "Up");
+                    }
+                    else if(key_event->action == KeyboardEvent::KEY_REPEAT) {
+                        lua_pushstring(L, "Repeat");
+                    }
+                    else {
+                        lua_pushnil(L);
+                    }
+                    lua_pushnumber(L, key_event->key);
+                    if(lua_pcall(L, 2, 0, 0)) {
+                        size_t sl = 0;
+                        const char *cs = lua_tolstring(L, -1, &sl);
+                        LOGMSG(ERROR) << cs;
+                    }
+                }
+            }
+            this->event_key.clear();
+            this->Lm.unlock();
+        }
+        evh_itr = this->event_handlers.find(reflection::GetTypeID<MouseMoveEvent>());
+        if(evh_itr != this->event_handlers.end()) {
+            this->Lm.lock();
+            auto mousemove_event = this->event_mmove.begin();
+            for( ;mousemove_event != this->event_mmove.end(); mousemove_event++) {
+                for(auto& handler : evh_itr->second) {
+                    lua_getglobal(L, handler.c_str());
+                    lua_pushnumber(L, mousemove_event->new_x);
+                    lua_pushnumber(L, mousemove_event->new_y);
+                    lua_pushnumber(L, mousemove_event->old_x);
+                    lua_pushnumber(L, mousemove_event->old_y);
+                    lua_pushnumber(L, mousemove_event->norm_x);
+                    lua_pushnumber(L, mousemove_event->norm_y);
+                    if(lua_pcall(L, 6, 0, 0)) {
+                        size_t sl = 0;
+                        const char *cs = lua_tolstring(L, -1, &sl);
+                        LOGMSG(ERROR) << cs;
+                    }
+                }
+            }
+            this->event_mmove.clear();
+            this->Lm.unlock();
+        }
+        evh_itr = this->event_handlers.find(reflection::GetTypeID<MouseBtnEvent>());
+        if(evh_itr != this->event_handlers.end()) {
+            this->Lm.lock();
+            auto mousebtn_event = event_mbtn.begin();
+            for( ;mousebtn_event != event_mbtn.end(); mousebtn_event++) {
+                for (auto& handler : evh_itr->second) {
+                    lua_getglobal(L, handler.c_str());
+                    if(mousebtn_event->action == MouseBtnEvent::DOWN) {
+                        lua_pushstring(L, "Down");
+                    }
+                    else if(mousebtn_event->action == MouseBtnEvent::UP) {
+                        lua_pushstring(L, "Up");
+                    }
+                    else {
+                        lua_pushnil(L);
+                    }
+                    if(mousebtn_event->button == MouseBtnEvent::LEFT) {
+                        lua_pushstring(L, "Left");
+                    }
+                    else if(mousebtn_event->button == MouseBtnEvent::RIGHT) {
+                        lua_pushstring(L, "Right");
+                    }
+                    else if(mousebtn_event->button == MouseBtnEvent::MIDDLE) {
+                        lua_pushstring(L, "Middle");
+                    }
+                    else {
+                        lua_pushnil(L);
+                    }
+                    if(lua_pcall(L, 2, 0, 0)) {
+                        size_t sl = 0;
+                        const char *cs = lua_tolstring(L, -1, &sl);
+                        LOGMSG(ERROR) << cs;
+                    }
+                }
+            }
+            this->event_mbtn.clear();
+            this->Lm.unlock();
+        }
+        // Call the registered update functions in Lua.
+        evh_itr = this->event_handlers.find(1);
+        if (evh_itr != this->event_handlers.end()) {
+            this->Lm.lock();
+            for(auto& handler : evh_itr->second) {
+                lua_getglobal(L, handler.c_str());
+                lua_pushnumber(L, delta.count() * 1.0E-9);
+                if(lua_pcall(L, 1, 0, 0)) {
+                    size_t sl = 0;
+                    const char *cs = lua_tolstring(L, -1, &sl);
+                    LOGMSG(ERROR) << cs;
+                }
+            }
+            this->Lm.unlock();
+        }
     }
 }
 
@@ -60,62 +164,21 @@ void LuaSystem::Terminate() {
 }
 
 void LuaSystem::Notify(const KeyboardEvent* key_event) {
-    if (this->event_handlers.find(reflection::GetTypeID<KeyboardEvent>()) != this->event_handlers.end()) {
-        for (auto handler : this->event_handlers[reflection::GetTypeID<KeyboardEvent>()]) {
-            lua_getglobal(L, handler.c_str());
-            if (key_event->action == KeyboardEvent::KEY_DOWN) {
-                lua_pushstring(L, "Down");
-            }
-            else if (key_event->action == KeyboardEvent::KEY_UP) {
-                lua_pushstring(L, "Up");
-            }
-            else if (key_event->action == KeyboardEvent::KEY_REPEAT) {
-                lua_pushstring(L, "Repeat");
-            }
-            lua_pushnumber(L, key_event->key);
-            lua_pcall(L, 2, 0, 0);
-        }
-    }
+    Lm.lock();
+    event_key.push_back(*key_event);
+    Lm.unlock();
 }
 
 void LuaSystem::Notify(const MouseBtnEvent* mousebtn_event) {
-    if (this->event_handlers.find(reflection::GetTypeID<MouseBtnEvent>()) != this->event_handlers.end()) {
-        for (auto handler : this->event_handlers[reflection::GetTypeID<MouseBtnEvent>()]) {
-            lua_getglobal(L, handler.c_str());
-            if (mousebtn_event->action == MouseBtnEvent::DOWN) {
-                lua_pushstring(L, "Down");
-            }
-            else if (mousebtn_event->action == MouseBtnEvent::UP) {
-                lua_pushstring(L, "Up");
-            }
-
-            if (mousebtn_event->button == MouseBtnEvent::LEFT) {
-                lua_pushstring(L, "Left");
-            }
-            else if (mousebtn_event->button == MouseBtnEvent::RIGHT) {
-                lua_pushstring(L, "Right");
-            }
-            else if (mousebtn_event->button == MouseBtnEvent::MIDDLE) {
-                lua_pushstring(L, "Middle");
-            }
-            lua_pcall(L, 2, 0, 0);
-        }
-    }
+    Lm.lock();
+    event_mbtn.push_back(*mousebtn_event);
+    Lm.unlock();
 }
 
 void LuaSystem::Notify(const MouseMoveEvent* mousemove_event) {
-    if (this->event_handlers.find(reflection::GetTypeID<MouseMoveEvent>()) != this->event_handlers.end()) {
-        for (auto handler : this->event_handlers[reflection::GetTypeID<MouseMoveEvent>()]) {
-            lua_getglobal(L, handler.c_str());
-            lua_pushnumber(L, mousemove_event->new_x);
-            lua_pushnumber(L, mousemove_event->new_y);
-            lua_pushnumber(L, mousemove_event->old_x);
-            lua_pushnumber(L, mousemove_event->old_y);
-            lua_pushnumber(L, mousemove_event->norm_x);
-            lua_pushnumber(L, mousemove_event->norm_y);
-            lua_pcall(L, 6, 0, 0);
-        }
-    }
+    Lm.lock();
+    event_mmove.push_back(*mousemove_event);
+    Lm.unlock();
 }
 
 } // End of script
