@@ -8,6 +8,7 @@
 #include "systems/graphics.hpp"
 #include "systems/meta-engine-system.hpp"
 #include "systems/sound-system.hpp"
+#include "systems/lua-system.hpp"
 
 namespace trillek {
 
@@ -79,6 +80,13 @@ public:
      */
     static sound::System& GetSoundSystem() { return *sound::System::GetInstance(); };
 
+    /** \brief Return the sound system instance
+    *
+    * \return sound::System&
+    *
+    */
+    static script::LuaSystem& GetLuaSystem() { return lua_sys; };
+
     /** \brief Get the FakeSystem
      *
      * \return FakeSystem& the fake system
@@ -113,6 +121,7 @@ private:
     static std::shared_ptr<graphics::RenderSystem> gl_sys_ptr;
     static std::unique_ptr<gui::GuiSystem> gui_system;
     static physics::PhysicsSystem phys_sys;
+    static script::LuaSystem lua_sys;
     static MetaEngineSystem engine_sys;
     static bool close_window;
 };
