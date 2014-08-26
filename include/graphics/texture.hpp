@@ -11,7 +11,7 @@ namespace graphics {
 
 class Texture : public GraphicsBase {
 public:
-    Texture() : texture_id(0) {}
+    Texture() : texture_id(0), compare(false) {}
     virtual ~Texture();
 
     // required to implement
@@ -24,6 +24,11 @@ public:
      * \brief new texture instance from image
      */
     Texture(const resource::PixelBuffer &);
+
+    /**
+     * \brief new texture instance from an image pointer
+     */
+    Texture(std::weak_ptr<resource::PixelBuffer>);
 
     // no copying (although it could be done)
     Texture(const Texture &) = delete;
@@ -44,6 +49,18 @@ public:
      * \return GLuint the GL texture ID
      */
     GLuint GetID() { return texture_id; }
+
+    /**
+     * \return true if the texture was created dynamic
+     */
+    bool IsDynamic() { return !source_ptr.expired(); }
+
+    /**
+     * Called by the RenderSystem to update dynamic textures
+     */
+    void Update();
+
+    void SetCompare(bool c) { compare = c; }
 
     /**
      * \brief create a texture from an image
@@ -91,7 +108,8 @@ public:
     bool Initialize(const std::vector<Property> &properties) { return true; }
 protected:
     GLuint texture_id;
-
+    bool compare;
+    std::weak_ptr<resource::PixelBuffer> source_ptr;
 };
 
 } // graphics
