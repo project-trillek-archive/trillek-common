@@ -5,6 +5,16 @@
 namespace trillek {
 namespace script {
 
+std::string lua_tostdstring(lua_State* L, int p) {
+    size_t strl;
+    const char * strc;
+    if(!lua_isstring(L, p)) {
+        return std::string();
+    }
+    strc = lua_tolstring(L, p, &strl);
+    return std::string(strc, strl);
+}
+
 int luaopen_Transform(lua_State*);
 int luaopen_LuaSys(lua_State*);
 

@@ -21,6 +21,8 @@ extern "C"
 namespace trillek {
 namespace script {
 
+std::string lua_tostdstring(lua_State*, int);
+
 typedef int (LuaRegisterFunction)(lua_State*);
 
 class LuaSystem : public SystemBase,

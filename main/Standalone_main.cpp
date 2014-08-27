@@ -47,8 +47,6 @@ int main(int argCount, char **argValues) {
 
     auto &gui = trillek::TrillekGame::GetGUISystem();
     gui.Start();
-    gui.LoadFont("assets/mona.ttf");
-    gui.LoadDocument("test.rml");
 
     // we register the systems in this queue
     std::queue<trillek::SystemBase*> systems;
