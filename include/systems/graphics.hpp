@@ -59,6 +59,25 @@ struct MaterialGroup {
     std::list<TextureGroup> texture_groups;
 };
 
+struct GUIVertex {
+    float x, y;
+    float ts, tt;
+    uint8_t c[4];
+};
+
+struct VertexListEntry {
+    uint32_t indexcount;
+    uint32_t vertexcount;
+    uint32_t textureref;
+    uint32_t offset;
+};
+
+struct RenderEntry {
+    uint32_t mode;
+    uint32_t entryref;
+    uint32_t extension;
+};
+
 class RenderSystem : public SystemBase, public util::Parser,
     public event::Subscriber<KeyboardEvent>
 {
@@ -286,6 +305,7 @@ public:
      * see Rocket/Core/RenderInterface.h for a description of the methods use.
      */
     class GuiRenderInterface : public Rocket::Core::RenderInterface {
+        friend class RenderSystem;
     public:
         GuiRenderInterface(RenderSystem *);
         virtual ~GuiRenderInterface();
@@ -319,9 +339,18 @@ public:
             const Rocket::Core::byte* source,
             const Rocket::Core::Vector2i& source_dimensions);
         virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
+
+        void CheckReload();
     private:
         RenderSystem *system;
-        std::vector<uint32_t> renderset;
+        bool reload_vert;
+        bool reload_index;
+        uint32_t vertlistid;
+        std::vector<GUIVertex> renderverts;
+        std::vector<uint32_t> renderindices;
+        std::vector<VertexListEntry> vertlist;
+        std::vector<glm::vec2> offsets;
+        std::vector<RenderEntry> gui_renderset;
     };
     GuiRenderInterface * GetGUIInterface() {
         return gui_interface.get();
@@ -386,6 +415,7 @@ private:
     id_t camera_id;
 
     std::unique_ptr<GuiRenderInterface> gui_interface;
+
     uint32_t current_ref;
 
     std::map<RenderCmd, std::function<bool(RenderCommandItem&)>> list_resolvers;

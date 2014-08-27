@@ -498,6 +498,16 @@ void RenderSystem::RenderScene() const {
 }
 
 void RenderSystem::RenderGUI() const {
+    // Make sure we have something to draw
+    if(gui_interface->vertlistid) {
+        auto vex = Get<VertexList>(gui_interface->vertlistid);
+        if(vex) {
+            vex->Bind();
+        }
+        else {
+            return;
+        }
+    }
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
@@ -518,8 +528,49 @@ void RenderSystem::RenderGUI() const {
     }
     glUniform2f(this->guisysshader->Uniform("pxscreen"), pxwidth, pxheight);
     glUniform1i(this->guisysshader->Uniform("in_sampl"), 0);
-    glUniform1i(this->guisysshader->Uniform("on_tex1"), 1);
-    TrillekGame::GetGUISystem().InvokeRender();
+    GLint tex_active = this->guisysshader->Uniform("on_tex1");
+    GLint pxoffset = this->guisysshader->Uniform("pxofs");
+
+    auto rset_itr = gui_interface->gui_renderset.begin();
+    auto rset_end = gui_interface->gui_renderset.end();
+    uint32_t refid, renid, rcount = 0;
+
+    while(rset_itr != rset_end) {
+        if(rcount++ > gui_interface->gui_renderset.size()) {
+            LOGMSGC(ERROR) << "Overrun";
+        }
+        renid = rset_itr->entryref - 1;
+        auto &listentry = gui_interface->vertlist[renid];
+
+        if(rset_itr->extension < gui_interface->offsets.size()) {
+            auto translation = gui_interface->offsets[rset_itr->extension];
+            glUniform2f(pxoffset, translation.x, translation.y);
+        }
+
+        refid = listentry.textureref;
+        if(refid) {
+            auto tex = Get<Texture>(refid);
+            if(tex) {
+                refid = tex->GetID();
+            }
+            else {
+                refid = 0;
+            }
+        }
+        if(!refid) {
+            glUniform1i(tex_active, 0);
+        }
+        else {
+            glUniform1i(tex_active, 1);
+        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, refid);
+        glBindSampler(0, 0);
+
+        glDrawElements(GL_TRIANGLES, listentry.indexcount, GL_UNSIGNED_INT, ((uint32_t*)nullptr)+listentry.offset);
+
+        rset_itr++;
+    }
     glDisable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ZERO);
 }
@@ -1010,6 +1061,10 @@ void RenderSystem::HandleEvents(const frame_tp& timepoint) {
         }
         this->frame_drop = false;
         TrillekGame::GetGUISystem().Update();
+        gui_interface->gui_renderset.clear();
+        gui_interface->offsets.clear();
+        TrillekGame::GetGUISystem().InvokeRender(); // rebuilds geometry if needed
+        gui_interface->CheckReload();
     }
     last_tp = now;
     for (auto ren : this->renderables) {

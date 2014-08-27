@@ -167,11 +167,11 @@ void VertexList::Configure() {
 void VertexList::LoadVertexData(void * datablock, uint32_t size, uint32_t count) {
     glBindBuffer(GL_ARRAY_BUFFER, this->buf[0]); // Bind the vertex buffer.
     CheckGLError();
-    glBufferData(GL_ARRAY_BUFFER, size * count, datablock, GL_STATIC_DRAW); CheckGLError();
+    glBufferData(GL_ARRAY_BUFFER, size * count, datablock, GL_DYNAMIC_DRAW); CheckGLError();
 }
 void VertexList::LoadIndexData(uint32_t * datablock, uint32_t count) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->buf[1]); // Bind the index buffer.
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * count, datablock, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * count, datablock, GL_DYNAMIC_DRAW);
 }
 
 } // namespace graphics
