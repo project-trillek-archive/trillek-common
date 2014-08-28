@@ -567,7 +567,9 @@ void RenderSystem::RenderGUI() const {
         glBindTexture(GL_TEXTURE_2D, refid);
         glBindSampler(0, 0);
 
-        glDrawElements(GL_TRIANGLES, listentry.indexcount, GL_UNSIGNED_INT, ((uint32_t*)nullptr)+listentry.offset);
+        if(listentry.offset < gui_interface->renderindices.size()) {
+            glDrawElements(GL_TRIANGLES, listentry.indexcount, GL_UNSIGNED_INT, ((uint32_t*)nullptr)+listentry.offset);
+        }
 
         rset_itr++;
     }

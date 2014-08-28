@@ -63,7 +63,17 @@ void GuiSystem::ProcessEvent(Rocket::Core::Event& event) {
 }
 Rocket::Core::EventListener* GuiSystem::GuiInstancer::InstanceEventListener(
         const Rocket::Core::String& value, Rocket::Core::Element* element) {
-    LOGMSGC(NOTICE) << "Register event " << element->GetTagName().CString() << ":" << value.CString();
+    std::string action(value.CString(), value.Length());
+    std::string event_class, event_value;
+    size_t cmark = action.find(':');
+    if(cmark != std::string::npos) {
+        event_class = action.substr(0, cmark);
+        event_value = action.substr(cmark + 1, std::string::npos);
+        LOGMSGC(NOTICE) << "Register " << event_class << " event: \"" << event_value << "\" on " << element->GetTagName().CString();
+    }
+    else {
+        LOGMSGC(NOTICE) << "Register event: \"" << action << "\" on " << element->GetTagName().CString();
+    }
     GuiEventInterface *ev = new GuiEventInterface(this->gs, ++this->gs.instance_id);
     this->gs.event_listeners.push_back(std::unique_ptr<GuiEventInterface>(ev));
     return ev;
@@ -75,7 +85,7 @@ GuiSystem::GuiEventInterface::GuiEventInterface(GuiSystem &u, uint32_t id) :
     gs(u), instance_id(id) {
 }
 GuiSystem::GuiEventInterface::~GuiEventInterface() {
-
+    LOGMSGC(DEBUG) << "~GuiEventInterface()";
 }
 void GuiSystem::GuiEventInterface::ProcessEvent(Rocket::Core::Event& event) {
     Rocket::Core::Element* te = event.GetTargetElement();

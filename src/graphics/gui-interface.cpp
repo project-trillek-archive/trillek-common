@@ -46,13 +46,11 @@ void RenderSystem::GuiRenderInterface::CheckReload() {
         }
     }
     if(reload_vert) {
-        LOGMSGFOR(INFO, RenderSystem) << "Reloading vert data: " << renderverts.size();
         vxl->LoadVertexData(renderverts.data(), sizeof(GUIVertex), renderverts.size());
     }
     if(reload_index) {
-        LOGMSGFOR(INFO, RenderSystem) << "Reloading index data: " << renderindices.size();
+        LOGMSGFOR(DEBUG, RenderSystem) << "Reloading index data: " << renderindices.size();
         vxl->LoadIndexData(renderindices.data(), renderindices.size());
-        LOGMSGFOR(INFO, RenderSystem) << "Reloading done";
     }
     glBindVertexArray(0);
     reload_vert = false;
@@ -61,7 +59,6 @@ void RenderSystem::GuiRenderInterface::CheckReload() {
 Rocket::Core::CompiledGeometryHandle RenderSystem::GuiRenderInterface::CompileGeometry(
         Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices,
         Rocket::Core::TextureHandle texture) {
-    LOGMSGFOR(INFO, RenderSystem) << "Compile geometry " << num_vertices << ", " << num_indices << ", " << static_cast<uint32_t>(texture);
 
     uint32_t refid, renid;
     uint32_t basevertex = 0;
@@ -123,6 +120,8 @@ Rocket::Core::CompiledGeometryHandle RenderSystem::GuiRenderInterface::CompileGe
         vle.textureref = static_cast<uint32_t>(texture);
         renid = vertlist.size() + 1;
         vertlist.push_back(vle);
+        reload_vert = true;
+        reload_index = true;
     }
     else {
         for(i = 0; i < num_vertices; i++) {
@@ -137,16 +136,16 @@ Rocket::Core::CompiledGeometryHandle RenderSystem::GuiRenderInterface::CompileGe
             v.c[3] = vertices[i].colour.alpha;
         }
         for(i = 0; i < num_indices; i++) {
-            renderindices[i + baseindex] = indices[i] + basevertex;
+            auto &index = renderindices[i + baseindex];
+            if(index != indices[i] + basevertex) reload_index = true;
+            index = indices[i] + basevertex;
         }
         vle.offset = baseindex;
         vle.textureref = static_cast<uint32_t>(texture);
         vertlist[renid] = vle;
         renid++;
+        reload_vert = true;
     }
-
-    reload_vert = true;
-    reload_index = true;
 
     return static_cast<Rocket::Core::CompiledGeometryHandle>(renid);
 }
@@ -166,7 +165,6 @@ void RenderSystem::GuiRenderInterface::ReleaseCompiledGeometry(
         Rocket::Core::CompiledGeometryHandle geometry) {
     uint32_t refid, renid, ccode;
     renid = static_cast<uint32_t>(geometry) - 1;
-    LOGMSGFOR(DEBUG, RenderSystem) << "Release-CGeometry " << vertlist[renid].vertexcount << ", " << vertlist[renid].indexcount;
     vertlist[renid].offset = ~0;
 }
 void RenderSystem::GuiRenderInterface::EnableScissorRegion(bool enable) {
