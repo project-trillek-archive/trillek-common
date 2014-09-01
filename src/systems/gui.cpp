@@ -87,7 +87,6 @@ Rocket::Core::EventListener* GuiSystem::GuiInstancer::InstanceEventListener(
             GuiEventListener *ev = new GuiEventListener(this->gs, handle_itr->second, ev_id);
             system_itr->second->AddUIEventType(ev_id, event_class, event_value);
             this->gs.event_listeners.push_back(std::unique_ptr<GuiEventListener>(ev));
-            LOGMSGC(NOTICE) << "Register " << event_class << " event: \"" << event_value << "\" on " << element->GetTagName().CString();
             return ev;
         }
         LOGMSGC(NOTICE) << "Register failed: " << event_class << " event: \"" << event_value << "\" on " << element->GetTagName().CString();
@@ -116,7 +115,6 @@ void GuiSystem::GuiEventListener::ProcessEvent(Rocket::Core::Event& event) {
     if(te) {
         idstring = te->GetId();
     }
-    LOGMSGC(NOTICE) << idstring.CString() << " Got custom [" << instance_id << "] event " << event.GetType().CString();
     auto sys_itr = gs.handlers.find(system_id);
     if(sys_itr != gs.handlers.end()) {
         sys_itr->second->UINotify(instance_id, std::string(idstring.CString(), idstring.Length()));

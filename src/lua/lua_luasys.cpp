@@ -4,6 +4,8 @@
 #include <luawrapper/luawrapper.hpp>
 #include <luawrapper/luawrapperutil.hpp>
 
+#include "logging.hpp"
+
 namespace trillek {
 namespace script {
 
@@ -31,6 +33,11 @@ int LuaSys_Subscribe(lua_State* L) {
     return 0;
 }
 
+int LuaLog(lua_State* L) {
+    LOGMSGFOR(INFO, LuaSystem) << lua_tostdstring(L, 1);
+    return 0;
+}
+
 static luaL_Reg LuaSystable[] =
 {
     { "Get", LuaSys_Get },
@@ -52,6 +59,8 @@ int luaopen_LuaSys(lua_State* L) {
         nullptr // If your class has a default constructor you can omit this argument,
         // LuaWrapper will generate a default allocator for you.
         );
+    lua_pushcclosure(L, LuaLog, 0);
+    lua_setglobal(L, "Log");
     return 1;
 }
 

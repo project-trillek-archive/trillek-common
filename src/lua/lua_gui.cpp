@@ -59,8 +59,10 @@ int luaopen_GuiSys(lua_State* L) {
         "GUI",
         GuiSys_table,
         GuiSys_metatable,
-        nullptr // default constructor
+        nullptr // no constructor
         );
+    lua_newtable(L);
+    lua_setglobal(L, "_UI");
     return 1;
 }
 

@@ -174,11 +174,28 @@ void LuaSystem::Terminate() {
 }
 
 void LuaSystem::AddUIEventType(uint32_t event_id, const std::string& event_class, const std::string& event_value) {
-
+    Lm.lock();
+    lua_getglobal(L, "_UI");
+    int s = lua_gettop(L);
+    lua_pushinteger(L, event_id);
+    luaL_loadstring(L, event_value.c_str());
+    lua_settable(L, s);
+    lua_pop(L, 1);
+    Lm.unlock();
 }
 
 void LuaSystem::UINotify(uint32_t event_id, const std::string& element_id) {
-
+    Lm.lock();
+    lua_getglobal(L, "_UI");
+    int s = lua_gettop(L);
+    lua_pushinteger(L, event_id);
+    lua_gettable(L, s);
+    if(lua_isfunction(L, lua_gettop(L))) {
+        lua_pushstring(L, element_id.c_str());
+        lua_pcall(L, 1, 0, 0);
+    }
+    lua_pop(L, 1);
+    Lm.unlock();
 }
 
 void LuaSystem::Notify(const KeyboardEvent* key_event) {
