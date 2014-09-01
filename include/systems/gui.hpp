@@ -2,6 +2,8 @@
 #define GUI_HPP_INCLUDED
 
 #include <memory>
+#include <string>
+#include <map>
 #include <vector>
 #include <Rocket/Core/SystemInterface.h>
 #include <Rocket/Core/FileInterface.h>
@@ -11,6 +13,7 @@
 #include <Rocket/Core/ElementDocument.h>
 
 #include "os-event.hpp"
+#include "systems/ui-event.hpp"
 
 namespace trillek {
 
@@ -43,7 +46,7 @@ class GuiSystem : public Rocket::Core::SystemInterface,
     friend class graphics::RenderSystem;
 public:
     GuiSystem(OS &sys, graphics::RenderSystem &gsys) :
-        opsystem(sys), grsystem(gsys) {}
+        opsystem(sys), csystem_id(0), grsystem(gsys), instance_id(0) {}
     ~GuiSystem() {}
 
     virtual float GetElapsedTime();
@@ -54,6 +57,8 @@ public:
     void Start();
     void LoadDocument(const std::string &);
     void LoadFont(const std::string &);
+
+    void RegisterHandler(const std::string& event_type, UIEventHandler* handler);
 
     void Notify(const KeyboardEvent*);
     void Notify(const MouseBtnEvent*);
@@ -68,24 +73,29 @@ public:
     private:
         GuiSystem &gs;
     };
-    class GuiEventInterface : public Rocket::Core::EventListener {
+    class GuiEventListener : public Rocket::Core::EventListener {
     public:
-        GuiEventInterface(GuiSystem &u, uint32_t id);
-        virtual ~GuiEventInterface();
+        GuiEventListener(GuiSystem &u, uint32_t sid, uint32_t id);
+        virtual ~GuiEventListener();
         virtual void ProcessEvent(Rocket::Core::Event& event);
     private:
         uint32_t instance_id;
+        uint32_t system_id;
         GuiSystem &gs;
     };
 private:
     void Update();
     void InvokeRender();
+    void RegisterTypes();
 
     std::unique_ptr<GuiInstancer> instancer;
     uint32_t instance_id;
-    std::list<std::unique_ptr<GuiEventInterface>> event_listeners;
+    uint32_t csystem_id;
+    std::list<std::unique_ptr<GuiEventListener>> event_listeners;
     OS &opsystem;
     graphics::RenderSystem &grsystem;
+    std::map<std::string, uint32_t> handler_ids;
+    std::map<uint32_t, UIEventHandler*> handlers;
     std::unique_ptr<Rocket::Core::Context, ReferenceDeleter> main_context;
     std::vector<unique_doc_ptr> documents;
 };

@@ -10,6 +10,7 @@
 #include "os-event.hpp"
 #include "trillek.hpp"
 #include "systems/system-base.hpp"
+#include "systems/ui-event.hpp"
 
 extern "C"
 {
@@ -26,6 +27,7 @@ std::string lua_tostdstring(lua_State*, int);
 typedef int (LuaRegisterFunction)(lua_State*);
 
 class LuaSystem : public SystemBase,
+    public UIEventHandler,
     public event::Subscriber<KeyboardEvent>,
     public event::Subscriber<MouseBtnEvent>,
     public event::Subscriber<MouseMoveEvent> {
@@ -88,21 +90,28 @@ public:
 
     /**
      * \brief Handles keyboard events.
-     *
      */
     void Notify(const KeyboardEvent* key_event);
 
     /**
      * \brief Handles mouse button events.
-     *
      */
     void Notify(const MouseBtnEvent* mousebtn_event);
 
     /**
      * \brief Handles mouse move events.
-     *
      */
     void Notify(const MouseMoveEvent* mousemove_event);
+
+    /**
+     * \brief called when UI adds an event.
+     */
+    void AddUIEventType(uint32_t event_id, const std::string& event_class, const std::string& event_value);
+
+    /**
+     * \brief Handles UI events.
+     */
+    void UINotify(uint32_t event_id, const std::string& element_id);
 
     /**
      * \brief Registers a script event handler

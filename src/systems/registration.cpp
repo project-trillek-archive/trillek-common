@@ -21,6 +21,8 @@
 #include "systems/transform-system.hpp"
 #include "systems/component-factory.hpp"
 #include "systems/sound-system.hpp"
+#include "systems/lua-system.hpp"
+#include "systems/gui.hpp"
 #include "util/json-parser.hpp"
 
 namespace trillek {
@@ -45,6 +47,10 @@ void ComponentFactory::RegisterTypes() {
     RegisterSystem<physics::Collidable>(&TrillekGame::GetPhysicsSystem());
     RegisterSystem<graphics::LightBase>(&TrillekGame::GetGraphicSystem());
     RegisterSystem<graphics::CameraBase>(&TrillekGame::GetGraphicSystem());
+}
+
+void gui::GuiSystem::RegisterTypes() {
+    RegisterHandler("lua", &TrillekGame::GetLuaSystem());
 }
 
 void util::JSONPasrser::RegisterTypes() {

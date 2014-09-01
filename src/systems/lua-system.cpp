@@ -173,6 +173,14 @@ void LuaSystem::Terminate() {
     lua_close(L);
 }
 
+void LuaSystem::AddUIEventType(uint32_t event_id, const std::string& event_class, const std::string& event_value) {
+
+}
+
+void LuaSystem::UINotify(uint32_t event_id, const std::string& element_id) {
+
+}
+
 void LuaSystem::Notify(const KeyboardEvent* key_event) {
     Lm.lock();
     event_key.push_back(*key_event);
