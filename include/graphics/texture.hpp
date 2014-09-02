@@ -11,7 +11,7 @@ namespace graphics {
 
 class Texture : public GraphicsBase {
 public:
-    Texture() : texture_id(0), compare(false) {}
+    Texture() : texture_id(0), gformat(GL_RED), compare(false) {}
     virtual ~Texture();
 
     // required to implement
@@ -68,9 +68,10 @@ public:
     void Load(const resource::PixelBuffer &);
 
     /**
-     * \brief create a texture from raw image data
+     * \brief Reload texture from raw image data in current format
+     * This is not for use outside of the graphics system.
      */
-    void Load(const uint8_t *, GLuint width, GLuint height);
+    void Reload(const uint8_t *, GLuint width, GLuint height);
 
     /**
      * \brief create a blank texture RGB or RGBA format
@@ -107,7 +108,9 @@ public:
     }
     bool Initialize(const std::vector<Property> &properties) { return true; }
 protected:
+
     GLuint texture_id;
+    GLenum gformat;
     bool compare;
     std::weak_ptr<resource::PixelBuffer> source_ptr;
 };

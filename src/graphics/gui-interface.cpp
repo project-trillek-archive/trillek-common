@@ -175,6 +175,21 @@ void RenderSystem::GuiRenderInterface::SetScissorRegion(int x, int y, int width,
 }
 bool RenderSystem::GuiRenderInterface::LoadTexture(Rocket::Core::TextureHandle& texture_handle,
         Rocket::Core::Vector2i& texture_dimensions,const Rocket::Core::String& source) {
+    std::vector<Property> props;
+    std::string texture_name(source.CString(), source.Length());
+    props.push_back(Property("filename", texture_name));
+    uint32_t refid = 0;
+
+    LOGMSGFOR(DEBUG, RenderSystem) << "Loading texture " << texture_name;
+    auto pixel_data = resource::ResourceMap::Create<resource::PixelBuffer>(texture_name, props);
+    if (pixel_data) {
+        auto texture = std::make_shared<Texture>(*pixel_data.get());
+        refid = this->system->Add(texture);
+        texture_handle = static_cast<Rocket::Core::TextureHandle>(refid);
+        texture_dimensions.x = pixel_data->Width();
+        texture_dimensions.y = pixel_data->Height();
+        return true;
+    }
     LOGMSGFOR(DEBUG, RenderSystem) << "Load texture " << texture_dimensions.x << ", " << texture_dimensions.y;
     return false;
 }
@@ -183,7 +198,7 @@ bool RenderSystem::GuiRenderInterface::GenerateTexture(Rocket::Core::TextureHand
     LOGMSGFOR(DEBUG, RenderSystem) << "Generate texture " << source_dimensions.x << ", " << source_dimensions.y;
     Texture * gentex = new Texture();
     gentex->Generate(source_dimensions.x, source_dimensions.y, true);
-    gentex->Load(source, source_dimensions.x, source_dimensions.y);
+    gentex->Reload(source, source_dimensions.x, source_dimensions.y);
     uint32_t refid;
     refid = this->system->Add(std::shared_ptr<Texture>(gentex));
     texture_handle = static_cast<Rocket::Core::TextureHandle>(refid);
