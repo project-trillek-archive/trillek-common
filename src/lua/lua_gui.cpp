@@ -22,6 +22,18 @@ int Gui_LoadDoc(lua_State* L) {
     gui->LoadDocument(doc);
     return 0;
 }
+int Gui_CloseDoc(lua_State* L) {
+    if(!luaW_is<gui::GuiSystem>(L, 1)) {
+        return 0;
+    }
+    gui::GuiSystem *gui = luaW_to<gui::GuiSystem>(L, 1);
+    int isnum;
+    uint32_t doc = lua_tounsignedx(L, 2, &isnum);
+    if(isnum) {
+        gui->CloseDocument(doc);
+    }
+    return 0;
+}
 int Gui_LoadFont(lua_State* L) {
     if(!luaW_is<gui::GuiSystem>(L, 1)) {
         return 0;
@@ -49,6 +61,7 @@ static luaL_Reg GuiSys_metatable[] =
 {
     { "LoadDocument", Gui_LoadDoc },
     { "LoadDoc", Gui_LoadDoc },
+    { "CloseDoc", Gui_CloseDoc },
     { "LoadFont", Gui_LoadFont },
     { "Subscribe", Gui_Subscribe },
     { nullptr, nullptr } // table end marker

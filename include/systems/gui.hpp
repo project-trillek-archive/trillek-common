@@ -11,6 +11,8 @@
 #include <Rocket/Core/EventListenerInstancer.h>
 #include <Rocket/Core/Context.h>
 #include <Rocket/Core/ElementDocument.h>
+#include <Rocket/Core/ElementInstancer.h>
+#include <Rocket/Core/Dictionary.h>
 
 #include "os-event.hpp"
 #include "systems/ui-event.hpp"
@@ -28,6 +30,7 @@ public:
     template<class T>
     void operator()(T* dd) {
         dd->GetContext()->UnloadDocument(dd);
+        dd->RemoveReference();
     }
 };
 class ReferenceDeleter {
@@ -37,7 +40,7 @@ public:
         dd->RemoveReference();
     }
 };
-typedef std::unique_ptr<Rocket::Core::ElementDocument, DocumentUnloader> unique_doc_ptr;
+typedef std::unique_ptr<Rocket::Core::ElementDocument, ReferenceDeleter> unique_doc_ptr;
 class GuiSystem : public Rocket::Core::SystemInterface,
     public Rocket::Core::EventListener,
     public event::Subscriber<KeyboardEvent>,
@@ -45,9 +48,8 @@ class GuiSystem : public Rocket::Core::SystemInterface,
     public event::Subscriber<MouseMoveEvent> {
     friend class graphics::RenderSystem;
 public:
-    GuiSystem(OS &sys, graphics::RenderSystem &gsys) :
-        opsystem(sys), csystem_id(0), grsystem(gsys), instance_id(0) {}
-    ~GuiSystem() {}
+    GuiSystem(OS &sys, graphics::RenderSystem &gsys);
+    virtual ~GuiSystem();
 
     virtual float GetElapsedTime();
     virtual bool LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::String& message);
@@ -57,6 +59,7 @@ public:
     void Start();
     void LoadDocument(const std::string &);
     void LoadFont(const std::string &);
+    void CloseDocument(uint32_t id);
 
     void RegisterHandler(const std::string& event_type, UIEventHandler* handler);
 
@@ -78,17 +81,39 @@ public:
         GuiEventListener(GuiSystem &u, uint32_t sid, uint32_t id);
         virtual ~GuiEventListener();
         virtual void ProcessEvent(Rocket::Core::Event& event);
+        virtual void OnAttach(Rocket::Core::Element*);
+        virtual void OnDetach(Rocket::Core::Element*);
+        int32_t GetAttachCount() { return attachcount; }
     private:
+        int32_t attachcount;
         uint32_t instance_id;
         uint32_t system_id;
         GuiSystem &gs;
     };
+
+private:
+    class GuiDocumentInstancer : public Rocket::Core::ElementInstancer {
+    public:
+        GuiDocumentInstancer(GuiSystem &u);
+        virtual ~GuiDocumentInstancer();
+        virtual Rocket::Core::Element* InstanceElement(
+            Rocket::Core::Element* parent,
+            const Rocket::Core::String& tag,
+            const Rocket::Core::XMLAttributes& attributes);
+        virtual void ReleaseElement(Rocket::Core::Element* element);
+        virtual void Release();
+    private:
+        GuiSystem &gs;
+    };
+
 private:
     void Update();
     void InvokeRender();
     void RegisterTypes();
+    void CleanUpObjects();
 
     std::unique_ptr<GuiInstancer> instancer;
+    std::unique_ptr<GuiDocumentInstancer> docinstancer;
     uint32_t instance_id;
     uint32_t csystem_id;
     std::list<std::unique_ptr<GuiEventListener>> event_listeners;

@@ -206,7 +206,8 @@ bool RenderSystem::GuiRenderInterface::GenerateTexture(Rocket::Core::TextureHand
 }
 void RenderSystem::GuiRenderInterface::ReleaseTexture(Rocket::Core::TextureHandle texture) {
     uint32_t refid = static_cast<uint32_t>(texture);
-    LOGMSGFOR(WARNING, RenderSystem) << "(nonimpl) Release texture " << refid;
+    this->system->Remove(refid);
+    LOGMSGFOR(DEBUG, RenderSystem) << "Release texture " << refid;
 }
 
 } // namespace graphics

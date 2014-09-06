@@ -12,6 +12,13 @@
 namespace trillek {
 namespace gui {
 
+GuiSystem::GuiSystem(OS &sys, graphics::RenderSystem &gsys) :
+    opsystem(sys), csystem_id(0), grsystem(gsys), instance_id(0) {}
+GuiSystem::~GuiSystem() {
+    main_context.reset(nullptr);
+    Rocket::Core::Shutdown();
+}
+
 float GuiSystem::GetElapsedTime() {
     return this->opsystem.GetTime().count() * 1.0E-9f;
 }
@@ -63,7 +70,7 @@ void GuiSystem::ProcessEvent(Rocket::Core::Event& event) {
     if(te) {
         idstring = te->GetId();
     }
-    LOGMSGC(NOTICE) << idstring.CString() << " Got event " << event.GetType().CString();
+    LOGMSGC(DEBUG) << idstring.CString() << " Got event " << event.GetType().CString();
 }
 
 void GuiSystem::RegisterHandler(const std::string& event_type, UIEventHandler* handler) {
@@ -87,6 +94,7 @@ Rocket::Core::EventListener* GuiSystem::GuiInstancer::InstanceEventListener(
             GuiEventListener *ev = new GuiEventListener(this->gs, handle_itr->second, ev_id);
             system_itr->second->AddUIEventType(ev_id, event_class, event_value);
             this->gs.event_listeners.push_back(std::unique_ptr<GuiEventListener>(ev));
+            LOGMSGC(DEBUG) << "Register: " << event_class << " event: \"" << event_value << "\" on " << element->GetTagName().CString();
             return ev;
         }
         LOGMSGC(NOTICE) << "Register failed: " << event_class << " event: \"" << event_value << "\" on " << element->GetTagName().CString();
@@ -98,15 +106,18 @@ Rocket::Core::EventListener* GuiSystem::GuiInstancer::InstanceEventListener(
 }
 
 void GuiSystem::GuiInstancer::Release() {
-    LOGMSGC(NOTICE) << "Unregister event";
+    LOGMSGC(DEBUG_FINE) << "Unregister event instancer";
 }
 
-GuiSystem::GuiEventListener::GuiEventListener(GuiSystem &u, uint32_t sid, uint32_t id) :
-    gs(u), system_id(sid), instance_id(id) {
+GuiSystem::GuiEventListener::GuiEventListener(GuiSystem &u, uint32_t sid, uint32_t id)
+        : gs(u) {
+    attachcount = 0;
+    system_id = sid;
+    instance_id = id;
 }
 
 GuiSystem::GuiEventListener::~GuiEventListener() {
-    LOGMSGC(DEBUG) << "~GuiEventListener()";
+    LOGMSGC(DEBUG_FINE) << "~GuiEventListener()";
 }
 
 void GuiSystem::GuiEventListener::ProcessEvent(Rocket::Core::Event& event) {
@@ -121,6 +132,16 @@ void GuiSystem::GuiEventListener::ProcessEvent(Rocket::Core::Event& event) {
     }
 }
 
+void GuiSystem::GuiEventListener::OnAttach(Rocket::Core::Element* elem) {
+    LOGMSGC(DEBUG_FINE) << "GuiEventListener-Attach " << ((uint32_t)elem);
+    attachcount++;
+}
+
+void GuiSystem::GuiEventListener::OnDetach(Rocket::Core::Element* elem) {
+    LOGMSGC(DEBUG_FINE) << "GuiEventListener-Detach " << ((uint32_t)elem);
+    attachcount--;
+}
+
 void GuiSystem::Update() {
     this->main_context->Update();
 }
@@ -129,16 +150,37 @@ void GuiSystem::InvokeRender() {
     this->main_context->Render();
 }
 
+void GuiSystem::CleanUpObjects() {
+    auto evlist_itr = event_listeners.begin();
+    while(evlist_itr != event_listeners.end()) {
+        if((*evlist_itr)->GetAttachCount() < 1) {
+            event_listeners.remove(*evlist_itr);
+            evlist_itr = event_listeners.begin();
+        }
+        else {
+            evlist_itr++;
+        }
+    }
+}
+
 void GuiSystem::LoadDocument(const std::string &docname) {
     Rocket::Core::ElementDocument *elemdoc = this->main_context->LoadDocument(docname.c_str());
     if(elemdoc != nullptr) {
         elemdoc->Show();
-        elemdoc->AddEventListener(Rocket::Core::String("click"), this, true);
+        elemdoc->AddEventListener(Rocket::Core::String("unload"), this, true);
 
+        LOGMSGC(DEBUG) << "Loaded Document - ref:" << elemdoc->GetReferenceCount();
         this->documents.push_back(unique_doc_ptr(elemdoc));
     } else {
         return; // failed
     }
+}
+
+void GuiSystem::CloseDocument(uint32_t id) {
+    LOGMSGC(DEBUG) << "Unload document";
+    // unload everything, until document IDs are added.
+    main_context->UnloadAllDocuments();
+    documents.clear();
 }
 
 void GuiSystem::LoadFont(const std::string &fname) {
@@ -150,8 +192,12 @@ void GuiSystem::Start() {
     Rocket::Core::SetRenderInterface(this->grsystem.GetGUIInterface());
     Rocket::Core::Initialise();
     Rocket::Controls::Initialise();
+    docinstancer.reset(new GuiDocumentInstancer(*this));
     instancer.reset(new GuiInstancer(*this));
+    Rocket::Core::Factory::RegisterElementInstancer("body", docinstancer.get());
     Rocket::Core::Factory::RegisterEventListenerInstancer(instancer.get());
+    docinstancer->RemoveReference();
+    instancer->RemoveReference();
 
     this->main_context.reset(Rocket::Core::CreateContext(
         "default", Rocket::Core::Vector2i(this->opsystem.GetWindowWidth(), this->opsystem.GetWindowHeight())
@@ -161,6 +207,29 @@ void GuiSystem::Start() {
     event::Dispatcher<KeyboardEvent>::GetInstance()->Subscribe(this);
     event::Dispatcher<MouseBtnEvent>::GetInstance()->Subscribe(this);
     event::Dispatcher<MouseMoveEvent>::GetInstance()->Subscribe(this);
+}
+
+GuiSystem::GuiDocumentInstancer::GuiDocumentInstancer(GuiSystem &u) : gs(u) {}
+GuiSystem::GuiDocumentInstancer::~GuiDocumentInstancer() {}
+Rocket::Core::Element* GuiSystem::GuiDocumentInstancer::InstanceElement(
+    Rocket::Core::Element* parent,
+    const Rocket::Core::String& tag,
+    const Rocket::Core::XMLAttributes& attributes) {
+    LOGMSGC(DEBUG_FINE) << "DocInstancer - New Element " << tag.CString();
+    Rocket::Core::ElementDocument *eldoc;
+    eldoc = new Rocket::Core::ElementDocument(tag);
+    eldoc->AddEventListener(Rocket::Core::String("load"), &this->gs, true);
+    return eldoc;
+}
+
+void GuiSystem::GuiDocumentInstancer::ReleaseElement(Rocket::Core::Element* element) {
+    delete element;
+    LOGMSGC(DEBUG_FINE) << "DocInstancer - Release Element " << ((uint32_t)element);
+    gs.CleanUpObjects();
+}
+
+void GuiSystem::GuiDocumentInstancer::Release() {
+    LOGMSGC(DEBUG_FINE) << "DocInstancer - Release System";
 }
 
 } // namespace gui
