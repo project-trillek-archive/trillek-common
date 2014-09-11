@@ -19,7 +19,7 @@ int Gui_LoadDoc(lua_State* L) {
     }
     gui::GuiSystem *gui = luaW_to<gui::GuiSystem>(L, 1);
     auto doc = lua_tostdstring(L, 2);
-    gui->LoadDocument(doc);
+    gui->AsyncLoadDocument(doc);
     return 0;
 }
 int Gui_CloseDoc(lua_State* L) {
@@ -30,7 +30,7 @@ int Gui_CloseDoc(lua_State* L) {
     int isnum;
     uint32_t doc = lua_tounsignedx(L, 2, &isnum);
     if(isnum) {
-        gui->CloseDocument(doc);
+        gui->AsyncCloseDocument(doc);
     }
     return 0;
 }

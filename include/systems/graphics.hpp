@@ -351,11 +351,14 @@ public:
         virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
 
         void CheckReload();
+        void CheckClear();
+        void RequestClear() { reload_all = true; }
     private:
         RenderSystem *system;
         bool reload_vert;
         bool reload_index;
         uint32_t vertlistid;
+        bool reload_all;
         std::vector<GUIVertex> renderverts;
         std::vector<uint32_t> renderindices;
         std::vector<VertexListEntry> vertlist;

@@ -15,6 +15,7 @@ RenderSystem::GuiRenderInterface::GuiRenderInterface(RenderSystem * parent) {
     this->vertlistid = 0;
     this->reload_index = false;
     this->reload_vert = false;
+    this->reload_all = false;
 }
 RenderSystem::GuiRenderInterface::~GuiRenderInterface() {
 
@@ -56,6 +57,18 @@ void RenderSystem::GuiRenderInterface::CheckReload() {
     reload_vert = false;
     reload_index = false;
 }
+
+void RenderSystem::GuiRenderInterface::CheckClear() {
+    if(this->reload_all) {
+        this->gui_renderset.clear();
+        this->offsets.clear();
+        this->renderverts.clear();
+        this->renderindices.clear();
+        this->vertlist.clear();
+        this->reload_all = false;
+    }
+}
+
 Rocket::Core::CompiledGeometryHandle RenderSystem::GuiRenderInterface::CompileGeometry(
         Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices,
         Rocket::Core::TextureHandle texture) {
@@ -180,17 +193,16 @@ bool RenderSystem::GuiRenderInterface::LoadTexture(Rocket::Core::TextureHandle& 
     props.push_back(Property("filename", texture_name));
     uint32_t refid = 0;
 
-    LOGMSGFOR(DEBUG, RenderSystem) << "Loading texture " << texture_name;
     auto pixel_data = resource::ResourceMap::Create<resource::PixelBuffer>(texture_name, props);
     if (pixel_data) {
-        auto texture = std::make_shared<Texture>(*pixel_data.get());
+        auto texture = std::make_shared<Texture>(pixel_data);
         refid = this->system->Add(texture);
         texture_handle = static_cast<Rocket::Core::TextureHandle>(refid);
         texture_dimensions.x = pixel_data->Width();
         texture_dimensions.y = pixel_data->Height();
+        pixel_data->Invalidate();
         return true;
     }
-    LOGMSGFOR(DEBUG, RenderSystem) << "Load texture " << texture_dimensions.x << ", " << texture_dimensions.y;
     return false;
 }
 bool RenderSystem::GuiRenderInterface::GenerateTexture(Rocket::Core::TextureHandle& texture_handle,

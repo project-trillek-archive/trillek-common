@@ -48,10 +48,35 @@ bool GuiSystem::LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::Str
     }
     return true;
 }
+
+void GuiSystem::AsyncLoadDocument(const std::string &file) {
+    async_action_lock.lock();
+    UIControlEvent event;
+    event.type = UIControlEvent::DOC_LOAD;
+    event.parameter = file;
+    async_actions.push_back(event);
+    async_action_lock.unlock();
+}
+
+void GuiSystem::AsyncCloseDocument(uint32_t id) {
+    async_action_lock.lock();
+    UIControlEvent event;
+    event.type = UIControlEvent::DOC_UNLOAD;
+    event.number = id;
+    async_actions.push_back(event);
+    async_action_lock.unlock();
+}
+
 void GuiSystem::Notify(const KeyboardEvent* key_event) {
+    if(this->opsystem.IsMouseLocked()) {
+        return;
+    }
 }
 
 void GuiSystem::Notify(const MouseBtnEvent* mouse_event) {
+    if(this->opsystem.IsMouseLocked()) {
+        return;
+    }
     if(mouse_event->action == MouseBtnEvent::DOWN) {
         this->main_context->ProcessMouseButtonDown(mouse_event->button, 0);
     }
@@ -61,6 +86,9 @@ void GuiSystem::Notify(const MouseBtnEvent* mouse_event) {
 }
 
 void GuiSystem::Notify(const MouseMoveEvent* mouse_event) {
+    if(this->opsystem.IsMouseLocked()) {
+        return;
+    }
     this->main_context->ProcessMouseMove(mouse_event->new_x, mouse_event->new_y, 0);
 }
 
@@ -143,6 +171,28 @@ void GuiSystem::GuiEventListener::OnDetach(Rocket::Core::Element* elem) {
 }
 
 void GuiSystem::Update() {
+    async_action_lock.lock();
+    auto action_itr = async_actions.begin();
+    if(action_itr != async_actions.end()) {
+        while(action_itr != async_actions.end()) {
+            switch(action_itr->type) {
+            case UIControlEvent::DOC_LOAD:
+                LoadDocument(action_itr->parameter);
+                break;
+            case UIControlEvent::DOC_UNLOAD:
+                CloseDocument(action_itr->number);
+                break;
+            case UIControlEvent::FONT_LOAD:
+                LoadFont(action_itr->parameter);
+                break;
+            default:
+                break;
+            }
+            action_itr++;
+        }
+        async_actions.clear();
+    }
+    async_action_lock.unlock();
     this->main_context->Update();
 }
 
@@ -161,6 +211,7 @@ void GuiSystem::CleanUpObjects() {
             evlist_itr++;
         }
     }
+    this->grsystem.GetGUIInterface()->RequestClear();
 }
 
 void GuiSystem::LoadDocument(const std::string &docname) {

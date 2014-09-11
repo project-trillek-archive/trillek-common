@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <mutex>
 #include <Rocket/Core/SystemInterface.h>
 #include <Rocket/Core/FileInterface.h>
 #include <Rocket/Core/EventListener.h>
@@ -58,8 +59,10 @@ public:
 
     void Start();
     void LoadDocument(const std::string &);
+    void AsyncLoadDocument(const std::string &);
     void LoadFont(const std::string &);
     void CloseDocument(uint32_t id);
+    void AsyncCloseDocument(uint32_t id);
 
     void RegisterHandler(const std::string& event_type, UIEventHandler* handler);
 
@@ -114,6 +117,8 @@ private:
 
     std::unique_ptr<GuiInstancer> instancer;
     std::unique_ptr<GuiDocumentInstancer> docinstancer;
+    std::mutex async_action_lock;
+    std::list<UIControlEvent> async_actions;
     uint32_t instance_id;
     uint32_t csystem_id;
     std::list<std::unique_ptr<GuiEventListener>> event_listeners;

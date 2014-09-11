@@ -1063,6 +1063,7 @@ void RenderSystem::HandleEvents(const frame_tp& timepoint) {
         }
         this->frame_drop = false;
         TrillekGame::GetGUISystem().Update();
+        gui_interface->CheckClear();
         gui_interface->gui_renderset.clear();
         gui_interface->offsets.clear();
         TrillekGame::GetGUISystem().InvokeRender(); // rebuilds geometry if needed
