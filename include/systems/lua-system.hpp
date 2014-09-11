@@ -109,6 +109,11 @@ public:
     void AddUIEventType(uint32_t event_id, const std::string& event_class, const std::string& event_value);
 
     /**
+     * \brief called when UI removes an event.
+     */
+    void RemoveUIEvent(uint32_t event_id);
+
+    /**
      * \brief Handles UI events.
      */
     void UINotify(uint32_t event_id, const std::string& element_id);

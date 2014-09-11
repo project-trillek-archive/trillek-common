@@ -12,8 +12,12 @@
 namespace trillek {
 namespace gui {
 
-GuiSystem::GuiSystem(OS &sys, graphics::RenderSystem &gsys) :
-    opsystem(sys), csystem_id(0), grsystem(gsys), instance_id(0) {}
+GuiSystem::GuiSystem(OS &sys, graphics::RenderSystem &gsys)
+        : opsystem(sys), grsystem(gsys) {
+    nextdoc_id = 0;
+    csystem_id = 0;
+    instance_id = 0;
+}
 GuiSystem::~GuiSystem() {
     main_context.reset(nullptr);
     Rocket::Core::Shutdown();
@@ -49,13 +53,17 @@ bool GuiSystem::LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::Str
     return true;
 }
 
-void GuiSystem::AsyncLoadDocument(const std::string &file) {
+uint32_t GuiSystem::AsyncLoadDocument(const std::string &file) {
     async_action_lock.lock();
     UIControlEvent event;
+    uint32_t docid = ++this->nextdoc_id;
+    if(!docid) docid = ++this->nextdoc_id;
     event.type = UIControlEvent::DOC_LOAD;
+    event.number = docid;
     event.parameter = file;
     async_actions.push_back(event);
     async_action_lock.unlock();
+    return docid;
 }
 
 void GuiSystem::AsyncCloseDocument(uint32_t id) {
@@ -146,6 +154,10 @@ GuiSystem::GuiEventListener::GuiEventListener(GuiSystem &u, uint32_t sid, uint32
 
 GuiSystem::GuiEventListener::~GuiEventListener() {
     LOGMSGC(DEBUG_FINE) << "~GuiEventListener()";
+    auto sys_itr = gs.handlers.find(system_id);
+    if(sys_itr != gs.handlers.end()) {
+        sys_itr->second->RemoveUIEvent(instance_id);
+    }
 }
 
 void GuiSystem::GuiEventListener::ProcessEvent(Rocket::Core::Event& event) {
@@ -177,7 +189,7 @@ void GuiSystem::Update() {
         while(action_itr != async_actions.end()) {
             switch(action_itr->type) {
             case UIControlEvent::DOC_LOAD:
-                LoadDocument(action_itr->parameter);
+                LoadDocument(action_itr->parameter, action_itr->number);
                 break;
             case UIControlEvent::DOC_UNLOAD:
                 CloseDocument(action_itr->number);
@@ -214,24 +226,40 @@ void GuiSystem::CleanUpObjects() {
     this->grsystem.GetGUIInterface()->RequestClear();
 }
 
-void GuiSystem::LoadDocument(const std::string &docname) {
+uint32_t GuiSystem::LoadDocument(const std::string &docname) {
+    uint32_t docid = ++this->nextdoc_id;
+    if(!docid) docid = ++this->nextdoc_id;
     Rocket::Core::ElementDocument *elemdoc = this->main_context->LoadDocument(docname.c_str());
     if(elemdoc != nullptr) {
         elemdoc->Show();
         elemdoc->AddEventListener(Rocket::Core::String("unload"), this, true);
+        LOGMSGC(DEBUG) << "Loaded Document " << docid;
+        this->documents[docid] = unique_doc_ptr(elemdoc);
+        return docid;
+    } else {
+        return 0; // failed
+    }
+}
 
-        LOGMSGC(DEBUG) << "Loaded Document - ref:" << elemdoc->GetReferenceCount();
-        this->documents.push_back(unique_doc_ptr(elemdoc));
+void GuiSystem::LoadDocument(const std::string &docname, uint32_t doc_id) {
+    Rocket::Core::ElementDocument *elemdoc = this->main_context->LoadDocument(docname.c_str());
+    if(elemdoc != nullptr) {
+        elemdoc->Show();
+        elemdoc->AddEventListener(Rocket::Core::String("unload"), this, true);
+        LOGMSGC(DEBUG) << "Loaded Document " << doc_id;
+        this->documents[doc_id] = unique_doc_ptr(elemdoc);
     } else {
         return; // failed
     }
 }
 
 void GuiSystem::CloseDocument(uint32_t id) {
-    LOGMSGC(DEBUG) << "Unload document";
-    // unload everything, until document IDs are added.
-    main_context->UnloadAllDocuments();
-    documents.clear();
+    auto doc_itr = documents.find(id);
+    if(doc_itr != documents.end()) {
+        LOGMSGC(DEBUG) << "Unload document " << id;
+        doc_itr->second->GetContext()->UnloadDocument(doc_itr->second.get());
+        documents.erase(doc_itr);
+    }
 }
 
 void GuiSystem::LoadFont(const std::string &fname) {

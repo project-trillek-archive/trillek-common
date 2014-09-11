@@ -171,6 +171,7 @@ void LuaSystem::HandleEvents(const frame_tp& timepoint) {
 
 void LuaSystem::Terminate() {
     lua_close(L);
+    L = nullptr;
 }
 
 void LuaSystem::AddUIEventType(uint32_t event_id, const std::string& event_class, const std::string& event_value) {
@@ -179,6 +180,18 @@ void LuaSystem::AddUIEventType(uint32_t event_id, const std::string& event_class
     int s = lua_gettop(L);
     lua_pushinteger(L, event_id);
     luaL_loadstring(L, event_value.c_str());
+    lua_settable(L, s);
+    lua_pop(L, 1);
+    Lm.unlock();
+}
+
+void LuaSystem::RemoveUIEvent(uint32_t event_id) {
+    if(!L) return;
+    Lm.lock();
+    lua_getglobal(L, "_UI");
+    int s = lua_gettop(L);
+    lua_pushinteger(L, event_id);
+    lua_pushnil(L);
     lua_settable(L, s);
     lua_pop(L, 1);
     Lm.unlock();

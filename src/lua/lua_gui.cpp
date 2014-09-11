@@ -19,8 +19,9 @@ int Gui_LoadDoc(lua_State* L) {
     }
     gui::GuiSystem *gui = luaW_to<gui::GuiSystem>(L, 1);
     auto doc = lua_tostdstring(L, 2);
-    gui->AsyncLoadDocument(doc);
-    return 0;
+    uint32_t docid = gui->AsyncLoadDocument(doc);
+    lua_pushunsigned(L, docid);
+    return 1;
 }
 int Gui_CloseDoc(lua_State* L) {
     if(!luaW_is<gui::GuiSystem>(L, 1)) {

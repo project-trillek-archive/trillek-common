@@ -19,6 +19,7 @@ class UIEventHandler {
 public:
     virtual void AddUIEventType(uint32_t event_id, const std::string& event_class, const std::string& event_value) = 0;
     virtual void UINotify(uint32_t event_id, const std::string& element_id) = 0;
+    virtual void RemoveUIEvent(uint32_t event_id) = 0;
 };
 
 } // namespace trillek

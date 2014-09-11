@@ -58,8 +58,9 @@ public:
     virtual void ProcessEvent(Rocket::Core::Event& event);
 
     void Start();
-    void LoadDocument(const std::string &);
-    void AsyncLoadDocument(const std::string &);
+    uint32_t LoadDocument(const std::string &);
+    void LoadDocument(const std::string &, uint32_t doc_id);
+    uint32_t AsyncLoadDocument(const std::string &);
     void LoadFont(const std::string &);
     void CloseDocument(uint32_t id);
     void AsyncCloseDocument(uint32_t id);
@@ -119,6 +120,7 @@ private:
     std::unique_ptr<GuiDocumentInstancer> docinstancer;
     std::mutex async_action_lock;
     std::list<UIControlEvent> async_actions;
+    uint32_t nextdoc_id;
     uint32_t instance_id;
     uint32_t csystem_id;
     std::list<std::unique_ptr<GuiEventListener>> event_listeners;
@@ -127,7 +129,7 @@ private:
     std::map<std::string, uint32_t> handler_ids;
     std::map<uint32_t, UIEventHandler*> handlers;
     std::unique_ptr<Rocket::Core::Context, ReferenceDeleter> main_context;
-    std::vector<unique_doc_ptr> documents;
+    std::map<uint32_t, unique_doc_ptr> documents;
 };
 
 } // namespace gui
