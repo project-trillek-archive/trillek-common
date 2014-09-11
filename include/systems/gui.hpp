@@ -26,14 +26,9 @@ class RenderSystem;
 }
 namespace gui {
 
-class DocumentUnloader {
-public:
-    template<class T>
-    void operator()(T* dd) {
-        dd->GetContext()->UnloadDocument(dd);
-        dd->RemoveReference();
-    }
-};
+/**
+ * Deleter for reference counted Rocket object pointers
+ */
 class ReferenceDeleter {
 public:
     template<class T>
@@ -41,7 +36,14 @@ public:
         dd->RemoveReference();
     }
 };
+/**
+ * Pointer type for Rocket Documents
+ */
 typedef std::unique_ptr<Rocket::Core::ElementDocument, ReferenceDeleter> unique_doc_ptr;
+
+/**
+ * GuiSystem is an extention of Graphics System, not a true trillek system
+ */
 class GuiSystem : public Rocket::Core::SystemInterface,
     public Rocket::Core::EventListener,
     public event::Subscriber<KeyboardEvent>,
@@ -64,6 +66,8 @@ public:
     void LoadFont(const std::string &);
     void CloseDocument(uint32_t id);
     void AsyncCloseDocument(uint32_t id);
+    void HideDocument(uint32_t id);
+    void ShowDocument(uint32_t id);
 
     void RegisterHandler(const std::string& event_type, UIEventHandler* handler);
 

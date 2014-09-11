@@ -75,6 +75,24 @@ void GuiSystem::AsyncCloseDocument(uint32_t id) {
     async_action_lock.unlock();
 }
 
+void GuiSystem::HideDocument(uint32_t id) {
+    async_action_lock.lock();
+    UIControlEvent event;
+    event.type = UIControlEvent::DOC_HIDE;
+    event.number = id;
+    async_actions.push_back(event);
+    async_action_lock.unlock();
+}
+
+void GuiSystem::ShowDocument(uint32_t id) {
+    async_action_lock.lock();
+    UIControlEvent event;
+    event.type = UIControlEvent::DOC_SHOW;
+    event.number = id;
+    async_actions.push_back(event);
+    async_action_lock.unlock();
+}
+
 void GuiSystem::Notify(const KeyboardEvent* key_event) {
     if(this->opsystem.IsMouseLocked()) {
         return;
@@ -197,6 +215,22 @@ void GuiSystem::Update() {
             case UIControlEvent::FONT_LOAD:
                 LoadFont(action_itr->parameter);
                 break;
+            case UIControlEvent::DOC_HIDE:
+                {
+                    auto doc_itr = documents.find(action_itr->number);
+                    if(doc_itr != documents.end()) {
+                        doc_itr->second->Hide();
+                    }
+                }
+                break;
+            case UIControlEvent::DOC_SHOW:
+                {
+                    auto doc_itr = documents.find(action_itr->number);
+                    if(doc_itr != documents.end()) {
+                        doc_itr->second->Show();
+                    }
+                }
+                break;
             default:
                 break;
             }
@@ -231,7 +265,6 @@ uint32_t GuiSystem::LoadDocument(const std::string &docname) {
     if(!docid) docid = ++this->nextdoc_id;
     Rocket::Core::ElementDocument *elemdoc = this->main_context->LoadDocument(docname.c_str());
     if(elemdoc != nullptr) {
-        elemdoc->Show();
         elemdoc->AddEventListener(Rocket::Core::String("unload"), this, true);
         LOGMSGC(DEBUG) << "Loaded Document " << docid;
         this->documents[docid] = unique_doc_ptr(elemdoc);
@@ -244,7 +277,6 @@ uint32_t GuiSystem::LoadDocument(const std::string &docname) {
 void GuiSystem::LoadDocument(const std::string &docname, uint32_t doc_id) {
     Rocket::Core::ElementDocument *elemdoc = this->main_context->LoadDocument(docname.c_str());
     if(elemdoc != nullptr) {
-        elemdoc->Show();
         elemdoc->AddEventListener(Rocket::Core::String("unload"), this, true);
         LOGMSGC(DEBUG) << "Loaded Document " << doc_id;
         this->documents[doc_id] = unique_doc_ptr(elemdoc);

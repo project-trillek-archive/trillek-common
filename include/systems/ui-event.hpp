@@ -9,7 +9,9 @@
 namespace trillek {
 
 struct UIControlEvent {
-    enum UICONTROL : uint32_t { DOC_LOAD, DOC_UNLOAD, FONT_LOAD };
+    enum UICONTROL : uint32_t {
+        DOC_LOAD, DOC_UNLOAD, FONT_LOAD, DOC_HIDE, DOC_SHOW
+    };
     UICONTROL type;
     uint32_t number;
     std::string parameter;
