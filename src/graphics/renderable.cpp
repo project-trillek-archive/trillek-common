@@ -61,12 +61,7 @@ void Renderable::UpdateBufferGroups() {
 
                 auto pixel_data = resource::ResourceMap::Create<resource::PixelBuffer>(name.str(), props);
                 if (pixel_data) {
-                    if (this->dyn_textures) {
-                        texture = std::make_shared<Texture>(pixel_data);
-                    }
-                    else {
-                        texture = std::make_shared<Texture>(*pixel_data.get());
-                    }
+                    texture = std::make_shared<Texture>(pixel_data, this->dyn_textures);
                     TrillekGame::GetGraphicSystem().Add(name.str(), texture);
                 }
             }

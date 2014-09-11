@@ -11,25 +11,25 @@ Texture::~Texture() {
     Destroy();
 }
 
-Texture::Texture(const resource::PixelBuffer & image) {
-    texture_id = 0;
-    Load(image);
-}
-
-Texture::Texture(std::weak_ptr<resource::PixelBuffer> pbp) : source_ptr(pbp) {
+Texture::Texture(std::weak_ptr<resource::PixelBuffer> pbp, bool dyn) : source_ptr(pbp) {
     texture_id = 0;
     gformat = 0;
     compare = false;
+    dynamic = dyn;
     auto locked_ptr = pbp.lock();
-    if(locked_ptr) {
-        Load(*locked_ptr.get());
+    if(!locked_ptr) {
+        LOGMSGC(WARNING) << "Failed to read image pointer";
     }
 }
 
 void Texture::Update() {
     std::shared_ptr<resource::PixelBuffer> locked_ptr = source_ptr.lock();
     if(locked_ptr) {
-        if(locked_ptr->IsDirty()) {
+        if(!texture_id) {
+            Load(*locked_ptr.get());
+            locked_ptr->Validate();
+        }
+        else if(locked_ptr->IsDirty()) {
             Reload(locked_ptr->GetBlockBase(), locked_ptr->Width(), locked_ptr->Height());
             locked_ptr->Validate();
         }
@@ -40,12 +40,17 @@ Texture::Texture(Texture && other) {
     texture_id = other.texture_id;
     compare = other.compare;
     gformat = other.gformat;
+    dynamic = other.dynamic;
     source_ptr = std::move(other.source_ptr);
     other.texture_id = 0;
 }
 
 Texture& Texture::operator=(Texture && other) {
     texture_id = other.texture_id;
+    compare = other.compare;
+    gformat = other.gformat;
+    dynamic = other.dynamic;
+    source_ptr = std::move(other.source_ptr);
     other.texture_id = 0;
     return *this;
 }
@@ -80,6 +85,7 @@ void Texture::Load(const resource::PixelBuffer & image) {
     }
     const uint8_t * pixdata = image.GetBlockBase();
     if(nullptr == pixdata) {
+        LOGMSGC(WARNING) << "Failed to read data pointer";
         return;
     }
     GLint magfilter = GL_LINEAR;

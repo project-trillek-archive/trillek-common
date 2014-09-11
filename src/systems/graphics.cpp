@@ -19,11 +19,15 @@
 namespace trillek {
 namespace graphics {
 
-RenderSystem::RenderSystem() : Parser("graphics") {
+RenderSystem::RenderSystem()
+        : Parser("graphics") {
     this->multisample = false;
     this->frame_drop = false;
     this->current_ref = 1;
+    this->camera_id = 0;
+    this->rem_textures.reset(new std::list<std::shared_ptr<Texture>>());
     this->gui_interface.reset(new RenderSystem::GuiRenderInterface(this));
+
     Shader::InitializeTypes();
 }
 
@@ -305,12 +309,10 @@ void RenderSystem::RenderScene() const {
 
     if(activerender) {
         for(auto texitem = dyn_textures.begin(); texitem != dyn_textures.end(); texitem++) {
-            if(texitem->expired()) {
-                // TODO: generate a remove request
-            }
-            else {
-                auto texptr = texitem->lock();
-                texptr->Update();
+            (*texitem)->Update();
+            if(!(*texitem)->IsDynamic()) {
+                // remove if static or expired
+                rem_textures->push_back(*texitem);
             }
         }
         for(auto& cmditem : activerender->render_commands) {
@@ -855,9 +857,7 @@ void RenderSystem::SetViewportSize(const unsigned int width, const unsigned int 
 template<>
 void RenderSystem::Add(const std::string & instancename, std::shared_ptr<Texture> instanceptr) {
     unsigned int type_id = reflection::GetTypeID<Texture>();
-    if(instanceptr->IsDynamic()) {
-        dyn_textures.push_back(instanceptr);
-    }
+    dyn_textures.push_back(instanceptr);
     graphics_instances[type_id][instancename] = instanceptr;
 }
 
@@ -1069,7 +1069,12 @@ void RenderSystem::HandleEvents(const frame_tp& timepoint) {
         gui_interface->CheckReload();
     }
     last_tp = now;
-    for (auto ren : this->renderables) {
+    auto tex = this->rem_textures->begin();
+    for(;tex != this->rem_textures->end(); tex++) {
+        this->dyn_textures.remove(*tex);
+    }
+    this->rem_textures->clear();
+    for (auto& ren : this->renderables) {
         if (ren.second->GetAnimation()) {
             ren.second->GetAnimation()->UpdateAnimation(delta.count() * 1E-9);
         }

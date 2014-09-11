@@ -262,6 +262,16 @@ public:
         graphics_references[obj_id] = instanceptr;
         return obj_id;
     }
+    /**
+     * \brief Adds a texture object to the system.
+     */
+    uint32_t Add(std::shared_ptr<Texture> instanceptr) {
+        uint32_t obj_id = current_ref++;
+        dyn_textures.push_back(instanceptr);
+        if(!obj_id) obj_id = current_ref++; // must not be zero
+        graphics_references[obj_id] = instanceptr;
+        return obj_id;
+    }
     void Remove(uint32_t instanceid) {
         auto instance_ptr = this->graphics_references.find(instanceid);
         if(instance_ptr != this->graphics_references.end()) {
@@ -401,7 +411,9 @@ private:
     std::list<std::pair<id_t, std::shared_ptr<LightBase>>> alllights;
 
     // A list of all dynamic textures in the system
-    std::list<std::weak_ptr<Texture>> dyn_textures;
+    std::list<std::shared_ptr<Texture>> dyn_textures;
+    // A list of all textures that need to be removed from dyn_textures
+    std::unique_ptr<std::list<std::shared_ptr<Texture>>> rem_textures;
 
     // map IDs to cameras
     std::map<id_t, std::shared_ptr<CameraBase>> cameras;

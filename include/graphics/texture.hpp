@@ -21,14 +21,9 @@ public:
     virtual bool Serialize(rapidjson::Document& document) { return false; }
 
     /**
-     * \brief new texture instance from image
-     */
-    Texture(const resource::PixelBuffer &);
-
-    /**
      * \brief new texture instance from an image pointer
      */
-    Texture(std::weak_ptr<resource::PixelBuffer>);
+    Texture(std::weak_ptr<resource::PixelBuffer>, bool dyn = false);
 
     // no copying (although it could be done)
     Texture(const Texture &) = delete;
@@ -53,7 +48,7 @@ public:
     /**
      * \return true if the texture was created dynamic
      */
-    bool IsDynamic() { return !source_ptr.expired(); }
+    bool IsDynamic() { return dynamic && !source_ptr.expired(); }
 
     /**
      * Called by the RenderSystem to update dynamic textures
@@ -112,6 +107,7 @@ protected:
     GLuint texture_id;
     GLenum gformat;
     bool compare;
+    bool dynamic;
     std::weak_ptr<resource::PixelBuffer> source_ptr;
 };
 
