@@ -92,6 +92,7 @@ public:
 private:
     GLuint program;
     std::vector<GLuint> shaders;
+    std::vector<std::pair<std::string, GLuint>> attr_bindings;
     std::vector<std::pair<std::string, GLuint>> output_bindings;
     std::map<std::string, GLint> attributes_list;
     std::map<std::string, GLint> uniforms_list;

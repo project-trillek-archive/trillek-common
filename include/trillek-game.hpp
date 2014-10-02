@@ -8,8 +8,13 @@
 #include "systems/graphics.hpp"
 #include "systems/meta-engine-system.hpp"
 #include "systems/sound-system.hpp"
+#include "systems/lua-system.hpp"
 
 namespace trillek {
+
+namespace gui {
+class GuiSystem;
+}
 
 namespace graphics {
 class RenderSystem;
@@ -42,6 +47,11 @@ public:
      */
     static graphics::RenderSystem& GetGraphicSystem();
 
+    /**
+     * Get a reference to the GUI system
+     */
+    static gui::GuiSystem& GetGUISystem();
+
     /** \brief Return the graphic system instance pointer
      *
      * \return std::shared_ptr<graphics::RenderSystem> the instance
@@ -69,6 +79,13 @@ public:
      *
      */
     static sound::System& GetSoundSystem() { return *sound::System::GetInstance(); };
+
+    /** \brief Return the sound system instance
+    *
+    * \return sound::System&
+    *
+    */
+    static script::LuaSystem& GetLuaSystem() { return lua_sys; };
 
     /** \brief Get the FakeSystem
      *
@@ -102,7 +119,9 @@ private:
     static OS glfw_os;
     static std::once_flag once_graphics;
     static std::shared_ptr<graphics::RenderSystem> gl_sys_ptr;
+    static std::unique_ptr<gui::GuiSystem> gui_system;
     static physics::PhysicsSystem phys_sys;
+    static script::LuaSystem lua_sys;
     static MetaEngineSystem engine_sys;
     static bool close_window;
 };

@@ -11,7 +11,7 @@ namespace graphics {
 
 class Texture : public GraphicsBase {
 public:
-    Texture() : texture_id(0), compare(false) {}
+    Texture() : texture_id(0), gformat(GL_RED), compare(false) {}
     virtual ~Texture();
 
     // required to implement
@@ -21,14 +21,9 @@ public:
     virtual bool Serialize(rapidjson::Document& document) { return false; }
 
     /**
-     * \brief new texture instance from image
-     */
-    Texture(const resource::PixelBuffer &);
-
-    /**
      * \brief new texture instance from an image pointer
      */
-    Texture(std::weak_ptr<resource::PixelBuffer>);
+    Texture(std::weak_ptr<resource::PixelBuffer>, bool dyn = false);
 
     // no copying (although it could be done)
     Texture(const Texture &) = delete;
@@ -53,7 +48,7 @@ public:
     /**
      * \return true if the texture was created dynamic
      */
-    bool IsDynamic() { return !source_ptr.expired(); }
+    bool IsDynamic() { return dynamic && !source_ptr.expired(); }
 
     /**
      * Called by the RenderSystem to update dynamic textures
@@ -68,9 +63,10 @@ public:
     void Load(const resource::PixelBuffer &);
 
     /**
-     * \brief create a texture from raw image data
+     * \brief Reload texture from raw image data in current format
+     * This is not for use outside of the graphics system.
      */
-    void Load(const uint8_t *, GLuint width, GLuint height);
+    void Reload(const uint8_t *, GLuint width, GLuint height);
 
     /**
      * \brief create a blank texture RGB or RGBA format
@@ -107,8 +103,11 @@ public:
     }
     bool Initialize(const std::vector<Property> &properties) { return true; }
 protected:
+
     GLuint texture_id;
+    GLenum gformat;
     bool compare;
+    bool dynamic;
     std::weak_ptr<resource::PixelBuffer> source_ptr;
 };
 

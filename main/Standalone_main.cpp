@@ -8,6 +8,7 @@
 #include "systems/resource-system.hpp"
 #include "systems/meta-engine-system.hpp"
 #include "systems/sound-system.hpp"
+#include "systems/gui.hpp"
 #include <cstddef>
 
 size_t gAllocatedSize = 0;
@@ -44,6 +45,9 @@ int main(int argCount, char **argValues) {
     // start the graphic system
     trillek::TrillekGame::GetGraphicSystem().Start(os.GetWindowWidth(), os.GetWindowHeight());
 
+    auto &gui = trillek::TrillekGame::GetGUISystem();
+    gui.Start();
+
     // we register the systems in this queue
     std::queue<trillek::SystemBase*> systems;
 
@@ -55,6 +59,15 @@ int main(int argCount, char **argValues) {
 
     // register the sound system
     systems.push(&trillek::TrillekGame::GetSoundSystem());
+
+    // Start Lua system.
+    trillek::TrillekGame::GetLuaSystem().Start();
+
+    // Load a test file/main Lua file.
+    trillek::TrillekGame::GetLuaSystem().LoadFile("assets/scripts/test.lua");
+
+    // register the Lua system.
+    systems.push(&trillek::TrillekGame::GetLuaSystem());
 
     // Detach the window from the current thread
     os.DetachContext();

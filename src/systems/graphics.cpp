@@ -3,6 +3,7 @@
 #include "systems/graphics.hpp"
 #include "systems/resource-system.hpp"
 #include "systems/transform-system.hpp"
+#include "systems/gui.hpp"
 #include "resources/text-file.hpp"
 #include "resources/md5mesh.hpp"
 #include "resources/mesh.hpp"
@@ -18,9 +19,15 @@
 namespace trillek {
 namespace graphics {
 
-RenderSystem::RenderSystem() : Parser("graphics") {
-    multisample = false;
+RenderSystem::RenderSystem()
+        : Parser("graphics") {
+    this->multisample = false;
     this->frame_drop = false;
+    this->current_ref = 1;
+    this->camera_id = 0;
+    this->rem_textures.reset(new std::list<std::shared_ptr<Texture>>());
+    this->gui_interface.reset(new RenderSystem::GuiRenderInterface(this));
+
     Shader::InitializeTypes();
 }
 
@@ -89,24 +96,12 @@ const int* RenderSystem::Start(const unsigned int width, const unsigned int heig
     };
     uint16_t quadindicies[] = { 0, 2, 1, 1, 2, 3 };
     const unsigned QUADVERTSIZE = sizeof(float) * 4;
-    glGenVertexArrays(1, &screenquad.vao); // Generate the VAO
-    glGenBuffers(1, &screenquad.vbo); // Generate the vertex buffer.
-    glGenBuffers(1, &screenquad.ibo); // Generate the element buffer.
 
-    glBindVertexArray(screenquad.vao); CheckGLError(); // Bind the VAO
-
-    glBindBuffer(GL_ARRAY_BUFFER, screenquad.vbo); CheckGLError(); // Bind the vertex buffer.
-
-    // Store the verts in the buffer.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quaddata), quaddata, GL_STATIC_DRAW); CheckGLError();
-
-    // Set the layout for the shaders
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, QUADVERTSIZE, (GLvoid*)0);
-    glEnableVertexAttribArray(0); CheckGLError();
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, screenquad.ibo); // Bind the element buffer.
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadindicies), quadindicies, GL_STATIC_DRAW);
-    CheckGLError();
+    screen_quad.SetFormat(VertexList::VEC4D);
+    screen_quad.Generate();
+    screen_quad.LoadVertexData(quaddata, QUADVERTSIZE, 4);
+    screen_quad.Configure();
+    screen_quad.LoadIndexData((uint32_t*)quadindicies, 3);
 
     glBindVertexArray(0); CheckGLError(); // unbind VAO when done
 
@@ -199,6 +194,9 @@ void RenderSystem::RegisterListResolvers() {
                         }
                     }
                 }
+            }
+            else if(rentype == "gui") {
+                rlist.run_values.push_back(Container((long)4));
             }
             else {
                 LOGMSGON(ERROR, rensys) << "Invalid render method";
@@ -317,12 +315,10 @@ void RenderSystem::RenderScene() const {
 
     if(activerender) {
         for(auto texitem = dyn_textures.begin(); texitem != dyn_textures.end(); texitem++) {
-            if(texitem->expired()) {
-                // TODO: generate a remove request
-            }
-            else {
-                auto texptr = texitem->lock();
-                texptr->Update();
+            (*texitem)->Update();
+            if(!(*texitem)->IsDynamic()) {
+                // remove if static or expired
+                rem_textures->push_back(*texitem);
             }
         }
         for(auto& cmditem : activerender->render_commands) {
@@ -385,6 +381,9 @@ void RenderSystem::RenderScene() const {
                     }
                     RenderPostPass(postshader);
                 }
+                    break;
+                case 4:
+                    RenderGUI();
                     break;
                 default:
                     break;
@@ -506,6 +505,86 @@ void RenderSystem::RenderScene() const {
     }
 }
 
+void RenderSystem::RenderGUI() const {
+    // Make sure we have something to draw
+    if(gui_interface->vertlistid) {
+        auto vex = Get<VertexList>(gui_interface->vertlistid);
+        if(vex) {
+            vex->Bind();
+        }
+        else {
+            return;
+        }
+    }
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_MULTISAMPLE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+    this->guisysshader->Use();
+    float pxwidth, pxheight;
+    if(!window_width) {
+        pxwidth = 1.0f;
+    }
+    else {
+        pxwidth = 1.0f / ((float)window_width);
+    }
+    if(!window_height) {
+        pxheight = 1.0f;
+    }
+    else {
+        pxheight = 1.0f / ((float)window_height);
+    }
+    glUniform2f(this->guisysshader->Uniform("pxscreen"), pxwidth, pxheight);
+    glUniform1i(this->guisysshader->Uniform("in_sampl"), 0);
+    GLint tex_active = this->guisysshader->Uniform("on_tex1");
+    GLint pxoffset = this->guisysshader->Uniform("pxofs");
+
+    auto rset_itr = gui_interface->gui_renderset.begin();
+    auto rset_end = gui_interface->gui_renderset.end();
+    uint32_t refid, renid, rcount = 0;
+
+    while(rset_itr != rset_end) {
+        if(rcount++ > gui_interface->gui_renderset.size()) {
+            LOGMSGC(ERROR) << "Overrun";
+        }
+        renid = rset_itr->entryref - 1;
+        auto &listentry = gui_interface->vertlist[renid];
+
+        if(rset_itr->extension < gui_interface->offsets.size()) {
+            auto translation = gui_interface->offsets[rset_itr->extension];
+            glUniform2f(pxoffset, translation.x, translation.y);
+        }
+
+        refid = listentry.textureref;
+        if(refid) {
+            auto tex = Get<Texture>(refid);
+            if(tex) {
+                refid = tex->GetID();
+            }
+            else {
+                refid = 0;
+            }
+        }
+        if(!refid) {
+            glUniform1i(tex_active, 0);
+        }
+        else {
+            glUniform1i(tex_active, 1);
+        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, refid);
+        glBindSampler(0, 0);
+
+        if(listentry.offset < gui_interface->renderindices.size()) {
+            glDrawElements(GL_TRIANGLES, listentry.indexcount, GL_UNSIGNED_INT, ((uint32_t*)nullptr)+listentry.offset);
+        }
+
+        rset_itr++;
+    }
+    glDisable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ZERO);
+}
+
 void RenderSystem::RenderColorPass(const float *view_matrix, const float *proj_matrix) const {
     for (auto matgrp : this->material_groups) {
         const auto& shader = matgrp.material.GetShader();
@@ -615,7 +694,8 @@ void RenderSystem::RenderDepthOnlyPass(const float *view_matrix, const float *pr
 }
 
 void RenderSystem::RenderLightingPass(const glm::mat4x4 &view_matrix, const float *inv_proj_matrix) const {
-    glBindVertexArray(screenquad.vao); CheckGLError();
+    //glBindVertexArray(screenquad.vao); CheckGLError();
+    screen_quad.Bind();
     GLint l_pos_loc = 0;
     GLint l_dir_loc = 0;
     GLint l_col_loc = 0;
@@ -725,7 +805,8 @@ void RenderSystem::UpdateModelMatrices() {
 
 void RenderSystem::RenderPostPass(std::shared_ptr<Shader> postshader) const {
     postshader->Use();
-    glBindVertexArray(screenquad.vao); CheckGLError();
+    //glBindVertexArray(screenquad.vao); CheckGLError();
+    screen_quad.Bind();
     glUniform1i(postshader->Uniform("layer0"), 0);CheckGLError();
     glUniform1i(postshader->Uniform("layer1"), 1);CheckGLError();
     glUniform1i(postshader->Uniform("layer2"), 2);CheckGLError();
@@ -750,6 +831,9 @@ void RenderSystem::RegisterStaticParsers() {
                 }
                 else if(settingname == "depth-shader") {
                     rensys.depthpassshader = rensys.Get<Shader>(settingval);
+                }
+                else if(settingname == "gui-shader") {
+                    rensys.guisysshader = rensys.Get<Shader>(settingval);
                 }
             }
         }
@@ -782,9 +866,7 @@ void RenderSystem::SetViewportSize(const unsigned int width, const unsigned int 
 template<>
 void RenderSystem::Add(const std::string & instancename, std::shared_ptr<Texture> instanceptr) {
     unsigned int type_id = reflection::GetTypeID<Texture>();
-    if(instanceptr->IsDynamic()) {
-        dyn_textures.push_back(instanceptr);
-    }
+    dyn_textures.push_back(instanceptr);
     graphics_instances[type_id][instancename] = instanceptr;
 }
 
@@ -989,9 +1071,20 @@ void RenderSystem::HandleEvents(const frame_tp& timepoint) {
             this->frame_drop_count = 0;
         }
         this->frame_drop = false;
+        TrillekGame::GetGUISystem().Update();
+        gui_interface->CheckClear();
+        gui_interface->gui_renderset.clear();
+        gui_interface->offsets.clear();
+        TrillekGame::GetGUISystem().InvokeRender(); // rebuilds geometry if needed
+        gui_interface->CheckReload();
     }
     last_tp = now;
-    for (auto ren : this->renderables) {
+    auto tex = this->rem_textures->begin();
+    for(;tex != this->rem_textures->end(); tex++) {
+        this->dyn_textures.remove(*tex);
+    }
+    this->rem_textures->clear();
+    for (auto& ren : this->renderables) {
         if (ren.second->GetAnimation()) {
             ren.second->GetAnimation()->UpdateAnimation(delta.count() * 1E-9);
         }

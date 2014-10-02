@@ -2,6 +2,7 @@
 #include "graphics/texture.hpp"
 #include "resources/pixel-buffer.hpp"
 #include <memory>
+#include "logging.hpp"
 
 namespace trillek {
 namespace graphics {
@@ -10,24 +11,26 @@ Texture::~Texture() {
     Destroy();
 }
 
-Texture::Texture(const resource::PixelBuffer & image) {
+Texture::Texture(std::weak_ptr<resource::PixelBuffer> pbp, bool dyn) : source_ptr(pbp) {
     texture_id = 0;
-    Load(image);
-}
-
-Texture::Texture(std::weak_ptr<resource::PixelBuffer> pbp) : source_ptr(pbp) {
-    texture_id = 0;
+    gformat = 0;
+    compare = false;
+    dynamic = dyn;
     auto locked_ptr = pbp.lock();
-    if(locked_ptr) {
-        Load(*locked_ptr.get());
+    if(!locked_ptr) {
+        LOGMSGC(WARNING) << "Failed to read image pointer";
     }
 }
 
 void Texture::Update() {
     std::shared_ptr<resource::PixelBuffer> locked_ptr = source_ptr.lock();
     if(locked_ptr) {
-        if(locked_ptr->IsDirty()) {
-            Load(locked_ptr->GetBlockBase(), locked_ptr->Width(), locked_ptr->Height());
+        if(!texture_id) {
+            Load(*locked_ptr.get());
+            locked_ptr->Validate();
+        }
+        else if(locked_ptr->IsDirty()) {
+            Reload(locked_ptr->GetBlockBase(), locked_ptr->Width(), locked_ptr->Height());
             locked_ptr->Validate();
         }
     }
@@ -35,11 +38,19 @@ void Texture::Update() {
 
 Texture::Texture(Texture && other) {
     texture_id = other.texture_id;
+    compare = other.compare;
+    gformat = other.gformat;
+    dynamic = other.dynamic;
+    source_ptr = std::move(other.source_ptr);
     other.texture_id = 0;
 }
 
 Texture& Texture::operator=(Texture && other) {
     texture_id = other.texture_id;
+    compare = other.compare;
+    gformat = other.gformat;
+    dynamic = other.dynamic;
+    source_ptr = std::move(other.source_ptr);
     other.texture_id = 0;
     return *this;
 }
@@ -56,7 +67,6 @@ void Texture::Load(const resource::PixelBuffer & image) {
     if(!texture_id) {
         glGenTextures(1, &texture_id);
     }
-    GLenum gformat;
     switch(image.GetFormat()) {
     case ImageColorMode::COLOR_RGBA:
         gformat = GL_RGBA;
@@ -75,6 +85,7 @@ void Texture::Load(const resource::PixelBuffer & image) {
     }
     const uint8_t * pixdata = image.GetBlockBase();
     if(nullptr == pixdata) {
+        LOGMSGC(WARNING) << "Failed to read data pointer";
         return;
     }
     GLint magfilter = GL_LINEAR;
@@ -97,27 +108,9 @@ void Texture::Load(const resource::PixelBuffer & image) {
     CheckGLError();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
-void Texture::Load(const uint8_t * image, GLuint width, GLuint height) {
+void Texture::Reload(const uint8_t * image, GLuint width, GLuint height) {
     CheckGLError();
     if(!texture_id) {
-        return;
-    }
-    using resource::ImageColorMode;
-    GLenum gformat;
-    switch (this->source_ptr.lock()->GetFormat()) {
-    case ImageColorMode::COLOR_RGBA:
-        gformat = GL_RGBA;
-        break;
-    case ImageColorMode::COLOR_RGB:
-        gformat = GL_RGB;
-        break;
-    case ImageColorMode::MONOCHROME_A:
-        gformat = GL_RG;
-        break;
-    case ImageColorMode::MONOCHROME:
-        gformat = GL_RED;
-        break;
-    default:
         return;
     }
     glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -135,13 +128,14 @@ void Texture::Generate(GLuint width, GLuint height, bool usealpha) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     CheckGLError();
     if(usealpha) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        CheckGLError();
+        gformat = GL_RGBA;
     }
     else {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        CheckGLError();
+        gformat = GL_RGB;
     }
+    glTexImage2D(GL_TEXTURE_2D, 0, gformat, width, height, 0, gformat, GL_UNSIGNED_BYTE, nullptr);
+    CheckGLError();
+
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -156,7 +150,8 @@ void Texture::GenerateStencil(GLuint width, GLuint height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     CheckGLError();
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX, width, height, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, nullptr);
+    gformat = GL_STENCIL_INDEX;
+    glTexImage2D(GL_TEXTURE_2D, 0, gformat, width, height, 0, gformat, GL_UNSIGNED_BYTE, nullptr);
     CheckGLError();
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -178,13 +173,13 @@ void Texture::GenerateDepth(GLuint width, GLuint height, bool stencil) {
     }
     CheckGLError();
     if(stencil) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_BYTE, nullptr);
-        CheckGLError();
+        gformat = GL_DEPTH_STENCIL;
     }
     else {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, nullptr);
-        CheckGLError();
+        gformat = GL_DEPTH_COMPONENT;
     }
+    glTexImage2D(GL_TEXTURE_2D, 0, gformat, width, height, 0, gformat, GL_UNSIGNED_BYTE, nullptr);
+    CheckGLError();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -194,6 +189,7 @@ void Texture::GenerateMultisample(GLuint width, GLuint height, GLuint samples) {
     }
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
     CheckGLError();
+    gformat = GL_RGBA;
     glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGBA, width, height, GL_FALSE);
     CheckGLError();
 
@@ -206,6 +202,7 @@ void Texture::GenerateMultisampleStencil(GLuint width, GLuint height, GLuint sam
     }
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
     CheckGLError();
+    gformat = GL_STENCIL_INDEX;
     glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_STENCIL_INDEX, width, height, GL_FALSE);
     CheckGLError();
 
@@ -219,13 +216,13 @@ void Texture::GenerateMultisampleDepth(GLuint width, GLuint height, GLuint sampl
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture_id);
     CheckGLError();
     if(stencil) {
-        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_DEPTH_STENCIL, width, height, GL_FALSE);
-        CheckGLError();
+        gformat = GL_DEPTH_STENCIL;
     }
     else {
-        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_DEPTH_COMPONENT, width, height, GL_FALSE);
-        CheckGLError();
+        gformat = GL_DEPTH_COMPONENT;
     }
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, gformat, width, height, GL_FALSE);
+    CheckGLError();
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 }
 

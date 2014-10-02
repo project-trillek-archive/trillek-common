@@ -37,7 +37,7 @@ size_t Material::GetTextureIndex(std::shared_ptr<Texture> t) {
 
 void Material::ActivateTexture(const size_t index, const GLuint target) {
     if (index < this->textures.size()) {
-        GLuint tex_id = this->textures[index].second;
+        GLuint tex_id = this->textures[index].first->GetID();
         glActiveTexture(GL_TEXTURE0 + target);
         glBindTexture(GL_TEXTURE_2D, tex_id);
     }

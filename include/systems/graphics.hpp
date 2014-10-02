@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <Rocket/Core/RenderInterface.h>
 
 #include <list>
 #include <memory>
@@ -21,6 +22,7 @@
 #include "graphics/material.hpp"
 #include "graphics/render-layer.hpp"
 #include "graphics/texture.hpp"
+#include "graphics/vertex-list.hpp"
 #include <map>
 #include "systems/dispatcher.hpp"
 #include "os.hpp"
@@ -29,6 +31,9 @@ namespace trillek {
 
 class Transform;
 
+namespace gui {
+class GuiSystem;
+}
 namespace graphics {
 
 enum class RenderCmd : unsigned int;
@@ -52,6 +57,25 @@ struct MaterialGroup {
         std::list<RenderableGroup> renderable_groups;
     };
     std::list<TextureGroup> texture_groups;
+};
+
+struct GUIVertex {
+    float x, y;
+    float ts, tt;
+    uint8_t c[4];
+};
+
+struct VertexListEntry {
+    uint32_t indexcount;
+    uint32_t vertexcount;
+    uint32_t textureref;
+    uint32_t offset;
+};
+
+struct RenderEntry {
+    uint32_t mode;
+    uint32_t entryref;
+    uint32_t extension;
 };
 
 class RenderSystem : public SystemBase, public util::Parser,
@@ -100,6 +124,8 @@ public:
     /** \brief Renders post processing passes for the scene.
      */
     void RenderPostPass(std::shared_ptr<Shader>) const;
+
+    void RenderGUI() const;
 
     /**
      * \brief Causes an update in the system based on the change in time.
@@ -211,6 +237,14 @@ public:
         }
         return std::static_pointer_cast<T>(instance_ptr->second);
     }
+    template<class T>
+    std::shared_ptr<T> Get(uint32_t instanceid) const {
+        auto instance_ptr = this->graphics_references.find(instanceid);
+        if(instance_ptr == this->graphics_references.end()) {
+            return std::shared_ptr<T>();
+        }
+        return std::static_pointer_cast<T>(instance_ptr->second);
+    }
     /**
      * \brief Adds a graphics object to the system.
      */
@@ -218,6 +252,31 @@ public:
     void Add(const std::string & instancename, std::shared_ptr<T> instanceptr) {
         unsigned int type_id = reflection::GetTypeID<T>();
         graphics_instances[type_id][instancename] = instanceptr;
+    }
+    /**
+     * \brief Adds a graphics object to the system.
+     */
+    uint32_t Add(std::shared_ptr<GraphicsBase> instanceptr) {
+        uint32_t obj_id = current_ref++;
+        if(!obj_id) obj_id = current_ref++; // must not be zero
+        graphics_references[obj_id] = instanceptr;
+        return obj_id;
+    }
+    /**
+     * \brief Adds a texture object to the system.
+     */
+    uint32_t Add(std::shared_ptr<Texture> instanceptr) {
+        uint32_t obj_id = current_ref++;
+        dyn_textures.push_back(instanceptr);
+        if(!obj_id) obj_id = current_ref++; // must not be zero
+        graphics_references[obj_id] = instanceptr;
+        return obj_id;
+    }
+    void Remove(uint32_t instanceid) {
+        auto instance_ptr = this->graphics_references.find(instanceid);
+        if(instance_ptr != this->graphics_references.end()) {
+            this->graphics_references.erase(instance_ptr);
+        }
     }
 
     struct BufferTri {
@@ -247,6 +306,67 @@ public:
         default:
             break;
         }
+    }
+
+    /**
+     * \brief Graphics interface for libRocket
+     * The GuiRenderInterface class provides all the methods for libRocket to
+     * render and generate graphics objects.
+     * see Rocket/Core/RenderInterface.h for a description of the methods use.
+     */
+    class GuiRenderInterface : public Rocket::Core::RenderInterface {
+        friend class RenderSystem;
+    public:
+        GuiRenderInterface(RenderSystem *);
+        virtual ~GuiRenderInterface();
+
+        virtual void RenderGeometry(
+            Rocket::Core::Vertex* vertices,
+            int num_vertices,
+            int* indices,
+            int num_indices,
+            Rocket::Core::TextureHandle texture,
+            const Rocket::Core::Vector2f& translation);
+        virtual Rocket::Core::CompiledGeometryHandle CompileGeometry(
+            Rocket::Core::Vertex* vertices,
+            int num_vertices,
+            int* indices,
+            int num_indices,
+            Rocket::Core::TextureHandle texture);
+        virtual void RenderCompiledGeometry(
+            Rocket::Core::CompiledGeometryHandle geometry,
+            const Rocket::Core::Vector2f& translation);
+        virtual void ReleaseCompiledGeometry(
+            Rocket::Core::CompiledGeometryHandle geometry);
+        virtual void EnableScissorRegion(bool enable);
+        virtual void SetScissorRegion(int x, int y, int width, int height);
+        virtual bool LoadTexture(
+            Rocket::Core::TextureHandle& texture_handle,
+            Rocket::Core::Vector2i& texture_dimensions,
+            const Rocket::Core::String& source);
+        virtual bool GenerateTexture(
+            Rocket::Core::TextureHandle& texture_handle,
+            const Rocket::Core::byte* source,
+            const Rocket::Core::Vector2i& source_dimensions);
+        virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
+
+        void CheckReload();
+        void CheckClear();
+        void RequestClear() { reload_all = true; }
+    private:
+        RenderSystem *system;
+        bool reload_vert;
+        bool reload_index;
+        uint32_t vertlistid;
+        bool reload_all;
+        std::vector<GUIVertex> renderverts;
+        std::vector<uint32_t> renderindices;
+        std::vector<VertexListEntry> vertlist;
+        std::vector<glm::vec2> offsets;
+        std::vector<RenderEntry> gui_renderset;
+    };
+    GuiRenderInterface * GetGUIInterface() {
+        return gui_interface.get();
     }
 private:
 
@@ -278,7 +398,8 @@ private:
     ViewMatrixSet vp_right;
     //glm::mat4 projection_matrix;
     //glm::mat4 view_matrix;
-    BufferTri screenquad; /// the full screen quad, used for much graphics effects
+    VertexList screen_quad;
+    //BufferTri screenquad; /// the full screen quad, used for much graphics effects
 
     unsigned int window_width; // Store the width of our window
     unsigned int window_height; // Store the height of our window
@@ -293,7 +414,9 @@ private:
     std::list<std::pair<id_t, std::shared_ptr<LightBase>>> alllights;
 
     // A list of all dynamic textures in the system
-    std::list<std::weak_ptr<Texture>> dyn_textures;
+    std::list<std::shared_ptr<Texture>> dyn_textures;
+    // A list of all textures that need to be removed from dyn_textures
+    std::unique_ptr<std::list<std::shared_ptr<Texture>>> rem_textures;
 
     // map IDs to cameras
     std::map<id_t, std::shared_ptr<CameraBase>> cameras;
@@ -302,11 +425,17 @@ private:
     std::shared_ptr<RenderList> activerender;
     std::shared_ptr<Shader> lightingshader;
     std::shared_ptr<Shader> depthpassshader;
+    std::shared_ptr<Shader> guisysshader;
     std::shared_ptr<CameraBase> camera;
     id_t camera_id;
 
+    std::unique_ptr<GuiRenderInterface> gui_interface;
+
+    uint32_t current_ref;
+
     std::map<RenderCmd, std::function<bool(RenderCommandItem&)>> list_resolvers;
 
+    std::map<uint32_t, std::shared_ptr<GraphicsBase>> graphics_references;
     std::map<unsigned int, std::map<std::string, std::shared_ptr<GraphicsBase>>> graphics_instances;
     std::map<unsigned int, glm::mat4> model_matrices;
     std::list<MaterialGroup> material_groups;

@@ -130,7 +130,7 @@ public:
      */
     void NotifySubscribers(const T* data) {
         if (this->subcriberss.find(0) != this->subcriberss.end()) {
-            auto subscriber_list = this->subcriberss.at(0);
+            auto& subscriber_list = this->subcriberss.at(0);
             for (Subscriber<T>* subscriber : subscriber_list) {
                 subscriber->Notify(data);
             }
