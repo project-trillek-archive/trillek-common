@@ -160,7 +160,7 @@ Rocket::Core::EventListener* GuiSystem::GuiInstancer::InstanceEventListener(
 }
 
 void GuiSystem::GuiInstancer::Release() {
-    LOGMSGC(DEBUG_FINE) << "Unregister event instancer";
+    //LOGMSGC(DEBUG_FINE) << "Unregister event instancer";
 }
 
 GuiSystem::GuiEventListener::GuiEventListener(GuiSystem &u, uint32_t sid, uint32_t id)
@@ -171,7 +171,7 @@ GuiSystem::GuiEventListener::GuiEventListener(GuiSystem &u, uint32_t sid, uint32
 }
 
 GuiSystem::GuiEventListener::~GuiEventListener() {
-    LOGMSGC(DEBUG_FINE) << "~GuiEventListener()";
+    //LOGMSGC(DEBUG_FINE) << "~GuiEventListener()";
     auto sys_itr = gs.handlers.find(system_id);
     if(sys_itr != gs.handlers.end()) {
         sys_itr->second->RemoveUIEvent(instance_id);
@@ -191,12 +191,12 @@ void GuiSystem::GuiEventListener::ProcessEvent(Rocket::Core::Event& event) {
 }
 
 void GuiSystem::GuiEventListener::OnAttach(Rocket::Core::Element* elem) {
-    LOGMSGC(DEBUG_FINE) << "GuiEventListener-Attach " << ((uint32_t)elem);
+    //LOGMSGC(DEBUG_FINE) << "GuiEventListener-Attach " << ((uint32_t)elem);
     attachcount++;
 }
 
 void GuiSystem::GuiEventListener::OnDetach(Rocket::Core::Element* elem) {
-    LOGMSGC(DEBUG_FINE) << "GuiEventListener-Detach " << ((uint32_t)elem);
+    //LOGMSGC(DEBUG_FINE) << "GuiEventListener-Detach " << ((uint32_t)elem);
     attachcount--;
 }
 
@@ -294,6 +294,14 @@ void GuiSystem::CloseDocument(uint32_t id) {
     }
 }
 
+bool GuiSystem::IsDocumentVisible(uint32_t id) {
+    auto doc_itr = documents.find(id);
+    if(doc_itr != documents.end()) {
+        return doc_itr->second->IsVisible();
+    }
+    return false;
+}
+
 void GuiSystem::LoadFont(const std::string &fname) {
     Rocket::Core::FontDatabase::LoadFontFace(fname.c_str());
 }
@@ -326,7 +334,7 @@ Rocket::Core::Element* GuiSystem::GuiDocumentInstancer::InstanceElement(
     Rocket::Core::Element* parent,
     const Rocket::Core::String& tag,
     const Rocket::Core::XMLAttributes& attributes) {
-    LOGMSGC(DEBUG_FINE) << "DocInstancer - New Element " << tag.CString();
+    //LOGMSGC(DEBUG_FINE) << "DocInstancer - New Element " << tag.CString();
     Rocket::Core::ElementDocument *eldoc;
     eldoc = new Rocket::Core::ElementDocument(tag);
     eldoc->AddEventListener(Rocket::Core::String("load"), &this->gs, true);
@@ -335,12 +343,12 @@ Rocket::Core::Element* GuiSystem::GuiDocumentInstancer::InstanceElement(
 
 void GuiSystem::GuiDocumentInstancer::ReleaseElement(Rocket::Core::Element* element) {
     delete element;
-    LOGMSGC(DEBUG_FINE) << "DocInstancer - Release Element " << ((uint32_t)element);
+    //LOGMSGC(DEBUG_FINE) << "DocInstancer - Release Element " << ((uint32_t)element);
     gs.CleanUpObjects();
 }
 
 void GuiSystem::GuiDocumentInstancer::Release() {
-    LOGMSGC(DEBUG_FINE) << "DocInstancer - Release System";
+    //LOGMSGC(DEBUG_FINE) << "DocInstancer - Release System";
 }
 
 } // namespace gui

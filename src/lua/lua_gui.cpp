@@ -59,6 +59,20 @@ int Gui_HideDoc(lua_State* L) {
     }
     return 0;
 }
+int Gui_DocVisible(lua_State* L) {
+    if(!luaW_is<gui::GuiSystem>(L, 1)) {
+        return 0;
+    }
+    gui::GuiSystem *gui = luaW_to<gui::GuiSystem>(L, 1);
+    int isnum;
+    uint32_t doc = lua_tounsignedx(L, 2, &isnum);
+    if(isnum) {
+        lua_pushboolean(L, (gui->IsDocumentVisible(doc) ? 1 : 0));
+        return 1;
+    }
+    lua_pushboolean(L, 0);
+    return 1;
+}
 int Gui_LoadFont(lua_State* L) {
     if(!luaW_is<gui::GuiSystem>(L, 1)) {
         return 0;
@@ -89,6 +103,7 @@ static luaL_Reg GuiSys_metatable[] =
     { "CloseDoc", Gui_CloseDoc },
     { "ShowDoc", Gui_ShowDoc },
     { "HideDoc", Gui_HideDoc },
+    { "DocVisible", Gui_DocVisible },
     { "LoadFont", Gui_LoadFont },
     { "Subscribe", Gui_Subscribe },
     { nullptr, nullptr } // table end marker

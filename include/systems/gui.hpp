@@ -65,6 +65,7 @@ public:
     uint32_t AsyncLoadDocument(const std::string &);
     void LoadFont(const std::string &);
     void CloseDocument(uint32_t id);
+    bool IsDocumentVisible(uint32_t id);
     void AsyncCloseDocument(uint32_t id);
     void HideDocument(uint32_t id);
     void ShowDocument(uint32_t id);
