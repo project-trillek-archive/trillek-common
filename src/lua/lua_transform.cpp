@@ -6,6 +6,9 @@
 #include "lua/lua_glm.hpp"
 
 #include "transform.hpp"
+#include "trillek-game.hpp"
+#include "components/component.hpp"
+#include "components/shared-component.hpp"
 #include "systems/transform-system.hpp"
 
 namespace trillek {
@@ -13,11 +16,11 @@ namespace script {
 
 int Traansform_get(lua_State* L) {
     const int entity_id = luaL_checkinteger(L, 1);
-    auto transform = TransformMap::GetTransform(entity_id);
+    auto transform = component::GetConstSharedPtr<component::Component::GraphicTransform>(entity_id);
     if (!transform) {
-        transform = TransformMap::AddTransform(entity_id);
+        return 0;
     }
-    luaW_push<Transform>(L, transform.get());
+    luaW_push<Transform>(L, const_cast<Transform*>(transform.get()));
     return 1;
 }
 

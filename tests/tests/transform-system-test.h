@@ -4,6 +4,7 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 #include <string>
+#include <exception>
 
 #include "systems/transform-system.hpp"
 #include "transform.hpp"
@@ -11,33 +12,6 @@
 using namespace trillek;
 
 namespace {
-    TEST(TransformSystemTest, AddTransform) {
-        // Get the instance allocated, and then we can use the shortcut static mathods.
-        TransformMap::GetInstance();
-
-        auto transform = TransformMap::AddTransform(0);
-
-        EXPECT_TRUE(transform != nullptr);
-    }
-    TEST(TransformSystemTest, GetTransform) {
-        auto transform = TransformMap::GetTransform(0);
-
-        EXPECT_TRUE(transform != nullptr);
-    }
-    TEST(TransformSystemTest, AddExistingTransform) {
-        auto transform = TransformMap::GetTransform(0);
-        auto transform2 = TransformMap::AddTransform(0);
-
-        EXPECT_TRUE(transform == transform2);
-    }
-    TEST(TransformSystemTest, RemoveTransform) {
-        TransformMap::RemoveTransform(0);
-
-        auto transform = TransformMap::GetTransform(0);
-
-        EXPECT_TRUE(transform == nullptr);
-    }
-
     TEST(TransformTest, GetTranslation) {
         trillek::Transform transform(0);
         glm::vec3 translation = transform.GetTranslation();
@@ -112,12 +86,12 @@ namespace {
         EXPECT_FLOAT_EQ(rotation.y, 1.0f);
         EXPECT_FLOAT_EQ(rotation.z, 1.0f);
 
-        transform.SetRotation(glm::vec3(glm::radians(5.0), glm::radians(5.0), glm::radians(5.0)));
+        transform.SetRotation(glm::vec3(1.4f, 1.4f, 1.4f));
         rotation = transform.GetRotation();
 
-        EXPECT_FLOAT_EQ(rotation.x, glm::radians(5.0));
-        EXPECT_FLOAT_EQ(rotation.y, glm::radians(5.0));
-        EXPECT_FLOAT_EQ(rotation.z, glm::radians(5.0));
+        EXPECT_FLOAT_EQ(rotation.x, 1.4);
+        EXPECT_FLOAT_EQ(rotation.y, 1.400001);
+        EXPECT_FLOAT_EQ(rotation.z, 1.4);
     }
 
     TEST(TransformTest, GetScale) {

@@ -50,14 +50,6 @@ public:
     void RunBatch() const override { };
 
     /**
-     * \brief Not used
-
-     * \param const unsigned int entity_id The entity ID the compoennt belongs to.
-     * \param std::shared_ptr<ComponentBase> component The component to add.
-     */
-    void AddComponent(const unsigned int entity_id, std::shared_ptr<ComponentBase> component);
-
-    /**
      * \brief Calls a systems's register function with this systems lua_State.
      *
      * \param LuaRegisterFunction The function to call with this system's lua_State.
@@ -80,7 +72,7 @@ public:
      * If event handling need some batch processing, a task list must be
      * prepared and stored temporarily to be retrieved by RunBatch().
      */
-    void HandleEvents(const frame_tp& timepoint) override;
+    void HandleEvents(frame_tp timepoint) override;
 
     /** \brief Save the data and terminate the system
      *
@@ -144,7 +136,7 @@ private:
     std::list<MouseMoveEvent> event_mmove;
     lua_State* L;
     std::mutex Lm;
-    frame_unit delta; // The time since the last HandleEvents was called.
+    long long delta; // The time since the last HandleEvents was called.
     std::map<int, std::list<std::string>> event_handlers; // Mapping of event ID to script function.
 };
 

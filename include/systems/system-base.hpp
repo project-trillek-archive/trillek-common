@@ -6,7 +6,13 @@
 
 namespace trillek {
 
-class ComponentBase;
+namespace component {
+    class Container;
+}
+
+namespace graphics {
+    class Container;
+}
 
 class SystemBase {
 
@@ -28,7 +34,7 @@ public:
      * If event handling need some batch processing, a task list must be
      * prepared and stored temporarily to be retrieved by RunBatch().
      */
-    virtual void HandleEvents(const frame_tp& timepoint) = 0;
+    virtual void HandleEvents(frame_tp timepoint) = 0;
 
     /** \brief Make all pre-update or post-update work.
      *
@@ -54,10 +60,24 @@ public:
     /**
      * \brief Adds a component to the system.
      *
+     * The component is not stored in the system but in the ComponentFactory
+     *
      * \param const unsigned int entityID The entity ID the compoennt belongs to.
      * \param std::shared_ptr<ComponentBase> component The component to add.
      */
-    virtual void AddComponent(const unsigned int entity_id, std::shared_ptr<ComponentBase> component) { }
+    virtual void AddDynamicComponent(const unsigned int entity_id,
+                                    std::shared_ptr<component::Container> component) {};
+
+    /**
+     * \brief Adds a component to the system (graphic version).
+     *
+     * The component is not stored in the system but in the ComponentFactory
+     *
+     * \param const unsigned int entityID The entity ID the compoennt belongs to.
+     * \param std::shared_ptr<ComponentBase> component The component to add.
+     */
+    virtual void AddDynamicComponent(const unsigned int entity_id,
+                                    std::shared_ptr<graphics::Container> component) {};
 };
 
 } // namespace trillek

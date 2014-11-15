@@ -8,23 +8,26 @@
 
 namespace trillek {
 class Property;
+
+namespace graphics {
 class Container;
+}
 
 namespace reflection {
 
 // some macros to make definitions a bit easier to read
 #define TRILLEK_MAKE_IDTYPE(a,b) \
     template<> inline const char* GetTypeName<a>() { return #a; } \
-    template<> inline const unsigned int GetTypeID<a>() { return b; }
+    template<> inline unsigned int GetTypeID<a>() { return b; }
 
 #define TRILLEK_MAKE_IDTYPE_NAME(a,n,b) \
     template<> inline const char* GetTypeName<a>() { return n; } \
-    template<> inline const unsigned int GetTypeID<a>() { return b; }
+    template<> inline unsigned int GetTypeID<a>() { return b; }
 
 // define something in a namespace, without the namespace in the type name
 #define TRILLEK_MAKE_IDTYPE_NS(ns,a,b) \
     template<> inline const char* GetTypeName<ns::a>() { return #a; } \
-    template<> inline const unsigned int GetTypeID<ns::a>() { return b; }
+    template<> inline unsigned int GetTypeID<ns::a>() { return b; }
 
 // various generic types
 TRILLEK_MAKE_IDTYPE(void, 0)
@@ -60,7 +63,7 @@ TRILLEK_MAKE_IDTYPE_NS(glm, mat2x2, 26)
 TRILLEK_MAKE_IDTYPE_NS(glm, mat3x3, 27)
 TRILLEK_MAKE_IDTYPE_NS(glm, mat4x4, 28)
 TRILLEK_MAKE_IDTYPE_NS(glm, quat, 29)
-TRILLEK_MAKE_IDTYPE(Container, 30)
+TRILLEK_MAKE_IDTYPE(graphics::Container, 30)
 TRILLEK_MAKE_IDTYPE(Property, 31)
 TRILLEK_MAKE_IDTYPE_NS(std, string, 32)
 TRILLEK_MAKE_IDTYPE_NS(glm, dvec2, 33)

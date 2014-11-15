@@ -7,13 +7,16 @@
 #include "systems/transform-system.hpp"
 #include "systems/resource-system.hpp"
 #include "systems/meta-engine-system.hpp"
-#include "systems/sound-system.hpp"
+#include "systems/physics.hpp"
+#include "systems/graphics.hpp"
 #include "systems/gui.hpp"
+#include "systems/sound-system.hpp"
 #include <cstddef>
 
 size_t gAllocatedSize = 0;
 
 int main(int argCount, char **argValues) {
+    trillek::TrillekGame::Initialize();
     // create the window
     auto& os = trillek::TrillekGame::GetOS();
 #if __APPLE__
@@ -69,6 +72,7 @@ int main(int argCount, char **argValues) {
     // register the Lua system.
     systems.push(&trillek::TrillekGame::GetLuaSystem());
 
+
     // Detach the window from the current thread
     os.DetachContext();
 
@@ -78,7 +82,23 @@ int main(int argCount, char **argValues) {
                    &trillek::TrillekGame::GetScheduler(),
                    5,
                    std::ref(systems));
-    while (!os.Closing()) {
+/*
+    // Start the client network layer
+    trillek::TrillekGame::GetNetworkController<trillek::network::CLIENT>().Initialize();
+    trillek::TrillekGame::GetNetworkController<trillek::network::CLIENT>().SetTCPHandler<trillek::network::CLIENT>();
+
+    // Start the server network layer and connect the client to the server
+    if(! trillek::TrillekGame::GetNetworkController<trillek::network::CLIENT>().Connect("localhost", 7777, "my_login", "secret password")) {
+        trillek::TrillekGame::GetNetworkController<trillek::network::SERVER>().Initialize();
+        trillek::TrillekGame::GetNetworkController<trillek::network::SERVER>().SetTCPHandler<trillek::network::SERVER>();
+        trillek::TrillekGame::GetNetworkController<trillek::network::SERVER>().Server_Start("localhost", 7777);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if(! trillek::TrillekGame::GetNetworkController<trillek::network::CLIENT>().Connect("localhost", 7777, "my_login", "secret password")) {
+            trillek::TrillekGame::NotifyCloseWindow();
+        }
+    };
+*/
+    while (! os.Closing()) {
         os.OSMessageLoop();
     }
     tp.join();
@@ -86,7 +106,6 @@ int main(int argCount, char **argValues) {
     // Terminating program
     os.MakeCurrent();
     os.Terminate();
-
-    jparser.Serialize("assets/tests/", "transforms.json", trillek::TransformMap::GetInstance());
+    std::cout << "Number of bytes not freed: " << gAllocatedSize << std::endl;
     return 0;
 }

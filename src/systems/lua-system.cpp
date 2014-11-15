@@ -1,3 +1,5 @@
+#if defined(_CLIENT_) || defined(_STANDALONE_)
+
 #include "systems/lua-system.hpp"
 #include "logging.hpp"
 #include <iostream>
@@ -34,8 +36,6 @@ void LuaSystem::Start() {
     RegisterTypes();
 }
 
-void LuaSystem::AddComponent(const unsigned int entity_id, std::shared_ptr<ComponentBase> component) { }
-
 void LuaSystem::RegisterSystem(LuaRegisterFunction func) {
     if (this->L) {
         func(this->L);
@@ -54,7 +54,7 @@ bool LuaSystem::LoadFile(const std::string fname) {
     return true;
 }
 
-void LuaSystem::HandleEvents(const frame_tp& timepoint) {
+void LuaSystem::HandleEvents(frame_tp timepoint) {
     static frame_tp last_tp;
     this->delta = timepoint - last_tp;
     last_tp = timepoint;
@@ -157,7 +157,7 @@ void LuaSystem::HandleEvents(const frame_tp& timepoint) {
             this->Lm.lock();
             for(auto& handler : evh_itr->second) {
                 lua_getglobal(L, handler.c_str());
-                lua_pushnumber(L, delta.count() * 1.0E-9);
+                lua_pushnumber(L, delta * 1.0E-9);
                 if(lua_pcall(L, 1, 0, 0)) {
                     size_t sl = 0;
                     const char *cs = lua_tolstring(L, -1, &sl);
@@ -231,3 +231,5 @@ void LuaSystem::Notify(const MouseMoveEvent* mousemove_event) {
 
 } // End of script
 } // End of trillek
+#endif
+
