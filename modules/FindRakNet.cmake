@@ -14,8 +14,8 @@ if (NOT RakNet_FOUND)
 	message("-- Manualy looking for RakNet")
 
 	# Set Search Paths
-	set(RAKNET_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/raknet/Source)
-	set(RAKNET_LIBRARY_DIRS ${CMAKE_SOURCE_DIR}/raknet/Lib/DLL)
+	set(RAKNET_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/common/raknet/Source)
+	set(RAKNET_LIBRARY_DIRS ${CMAKE_SOURCE_DIR}/common/raknet/Lib/DLL)
 	
 	find_path(RAKNET_INCLUDE_DIR RakPeer.h ${RAKNET_INCLUDE_DIRS})
 	if (RAKNET_INCLUDE_DIR)
