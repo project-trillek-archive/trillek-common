@@ -16,7 +16,7 @@
 
 namespace trillek {
 
-class OS {
+class OS final {
 public:
     OS() : mouse_lock(false) { }
     ~OS() { }

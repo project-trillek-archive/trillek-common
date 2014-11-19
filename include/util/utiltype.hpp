@@ -37,7 +37,7 @@ struct FourCC {
 template<class> class ErrorReturn;
 
 template<>
-class ErrorReturn<void> {
+class ErrorReturn<void> final {
 public:
     int error_code;
     //std::string error_text;
@@ -128,7 +128,7 @@ public:
 };
 
 template<class RT>
-class ErrorReturn {
+class ErrorReturn final {
     friend class ErrorReturn<void>;
 public:
     RT value;

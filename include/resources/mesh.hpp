@@ -30,7 +30,7 @@ struct MeshGroup {
 class Mesh : public ResourceBase {
 public:
     Mesh() { }
-    ~Mesh() { }
+    virtual ~Mesh() { }
 
     /**
      * \brief Returns a sub-mesh group.

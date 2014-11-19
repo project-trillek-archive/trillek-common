@@ -4,10 +4,10 @@
 #include "map-array.hpp"
 
 namespace trillek {
-class NetworkNode {
+class NetworkNode final {
 public:
     NetworkNode() {};
-    virtual ~NetworkNode() {};
+    ~NetworkNode() {};
 
     static void AddEntity(const id_t id, int&& cnx) {
         connection_map[id] = std::move(cnx);

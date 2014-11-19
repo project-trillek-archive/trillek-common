@@ -23,7 +23,6 @@ struct Chunk {
     T data[CONTAINER_CHUNK_SIZE];
 };
 
-template<class T>
 /** \brief A template used as a container. It has the same interface and
  * behaviour as a map but stores data in memory blocks of 16 elements.
  *
@@ -32,10 +31,11 @@ template<class T>
  *
  * Complexity is O(log(n/16)).
  */
-class MapArray {
+template<class T>
+class MapArray final {
 public:
     MapArray() {}; // default constructor
-    virtual ~MapArray() {}; // default destructor
+    ~MapArray() {}; // default destructor
 
     // We reimplement some functions of the map interface
 
@@ -166,7 +166,7 @@ private:
 template<class T>
 /** \brief An iterator for MapArray
  */
-class MapArrayIterator
+class MapArrayIterator final
         : public std::iterator<std::bidirectional_iterator_tag, T> {
 public:
     /** \brief Default constructor
@@ -200,7 +200,7 @@ public:
     /** \brief Default destructor
      *
      */
-    virtual ~MapArrayIterator() {};
+    ~MapArrayIterator() {};
 
     /** \brief Copy constructor
      *

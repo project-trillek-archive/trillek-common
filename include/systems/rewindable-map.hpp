@@ -27,7 +27,7 @@ using History = std::pair<HistoryMap<SharedContainerConst<L,W>>,HistoryMap<Share
  * HistorySize is the capacity of the history of commits.
  */
 template<class K, class V, class Timepoint, int HistorySize>
-class RewindableMap {
+class RewindableMap final {
 
     typedef TrillekAllocator<std::pair<const K,V>> allocator_type;
     typedef TrillekAllocator<std::pair<const K,const V>> const_allocator_type;

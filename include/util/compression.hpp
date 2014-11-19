@@ -100,7 +100,7 @@ namespace algorithm {
         uint8_t v[455];
     };
 
-    class Inflate : public DecompressionMethod {
+    class Inflate final : public DecompressionMethod {
     public:
         Inflate();
         ~Inflate();

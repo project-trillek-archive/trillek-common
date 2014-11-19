@@ -17,7 +17,7 @@ namespace trillek {
 /** \brief A reference to simulate an lvalue
  */
 template<class T>
-class reference {
+class reference final {
 public:
     reference(T& c, const size_t offset) : c(c), offset(offset) {};
 
@@ -30,7 +30,7 @@ public:
         offset = std::move(offset);
     }
 
-    virtual ~reference() {};
+    ~reference() {};
 
     reference& operator=(bool b) {
         T m(T(1) << offset);
@@ -80,7 +80,7 @@ class BitMapEnumerator;
 /** \brief A bitset like boost::dynamic_bitset
  */
 template<class T>
-class BitMap {
+class BitMap final {
 public:
     /** \brief Constructor of a BitSet
      *
@@ -97,7 +97,7 @@ public:
                                      last_block(0), first_block(0) {};
 
     // Default destructor
-    virtual ~BitMap() {};
+    ~BitMap() {};
 
     // Copy constructor
     BitMap(const BitMap& ba) {
@@ -354,12 +354,12 @@ BitMap<T> operator^(const BitMap<T>& lhs, const BitMap<T>& rhs) {
 
 #if defined(__GNUG__) || defined(_MSC_VER) // define BitMapEnumerator per compiler
 template<class T>
-class BitMapEnumerator {
+class BitMapEnumerator final {
 public:
     BitMapEnumerator(const BitMap<T>& bs, size_t max_iterations) : bitarray(bs),
         current_long((T*) bs.data()), max_iterations(max_iterations),
         last_bit(0), current_value(-1) { ++(*this); };
-    virtual ~BitMapEnumerator() {};
+    ~BitMapEnumerator() {};
 
     size_t operator++() {
         auto length = std::max(bitarray.size() + BlockSize(),max_iterations);
@@ -414,11 +414,11 @@ private:
 #else // other compilers : not optimized at all
 
 template<class T>
-class BitMapEnumerator {
+class BitMapEnumerator final {
 public:
     BitMapEnumerator(BitMap<T>& bs, size_t max_iterations)
      : bitarray(bs), current_value(-1), max_iterations(max_iterations) { ++(*this); };
-    virtual ~BitMapEnumerator() {};
+    ~BitMapEnumerator() {};
 
     size_t operator++() {
         auto length = bitarray.size();

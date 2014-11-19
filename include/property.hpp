@@ -13,7 +13,7 @@ namespace trillek {
  * Properties have a name and a value. The value is
  * accessed by calling Get() with the appropriate type.
  */
-class Property {
+class Property final {
 private:
     Property() : value_holder(nullptr) { }
 public:

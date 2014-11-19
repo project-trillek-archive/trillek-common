@@ -24,10 +24,10 @@ typename SystemContainer<type>::container_type SystemContainer<type>::container;
 template<Component C>
 BitMap<uint32_t> SystemContainer<C>::bitmap;
 
-class System {
+class System final {
 public:
     System() {};
-    virtual ~System() {};
+    ~System() {};
 
     template<Component type>
     typename type_trait<type>::value_type& Get(id_t entity_id) {

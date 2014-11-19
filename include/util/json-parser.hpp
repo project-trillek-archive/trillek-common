@@ -56,7 +56,7 @@ struct JSONDocument {
     rapidjson::Document document; // Currently parsed document.
 };
 
-class JSONPasrser {
+class JSONPasrser final {
 public:
     JSONPasrser();
 

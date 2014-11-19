@@ -7,7 +7,7 @@ namespace trillek {
 namespace util {
 namespace algorithm {
 
-struct Crc32 : public FourCC {
+struct Crc32 final : public FourCC {
     Crc32() {
         Init();
     }
@@ -26,7 +26,7 @@ struct Crc32 : public FourCC {
         Last();
     }
 };
-struct Adler32 : public FourCC {
+struct Adler32 final : public FourCC {
     Adler32() {
         Init();
     }

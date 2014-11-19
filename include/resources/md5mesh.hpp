@@ -12,7 +12,7 @@
 namespace trillek {
 namespace resource {
 
-class MD5Mesh : public Mesh {
+class MD5Mesh final : public Mesh {
 public:
     MD5Mesh() { }
     ~MD5Mesh() { }

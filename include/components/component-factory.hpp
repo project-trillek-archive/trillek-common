@@ -20,7 +20,7 @@ namespace trillek {
 using component::Component;
 
 // Singleton approach derived from http://silviuardelean.ro/2012/06/05/few-singleton-approaches/ .
-class ComponentFactory : public util::Parser {
+class ComponentFactory final : public util::Parser {
 private:
     ComponentFactory() : Parser("entities") { }
     ComponentFactory(const ComponentFactory& right) : Parser("entities") {

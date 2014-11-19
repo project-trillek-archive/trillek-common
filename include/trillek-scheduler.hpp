@@ -74,7 +74,7 @@ protected:
 };
 
 template<class T>
-class TaskRequest : public TaskRequestBase {
+class TaskRequest final : public TaskRequestBase {
 public:
     TaskRequest(T&& funct) :
         funct(std::forward<T>(funct)),
@@ -86,7 +86,7 @@ public:
         TaskRequestBase(Now() + delay)
         {};
 
-    virtual ~TaskRequest() {};
+    ~TaskRequest() {};
 
     void RunTask() override {
         funct();
@@ -96,7 +96,7 @@ private:
 };
 
 template<>
-class TaskRequest<chain_t> : public TaskRequestBase {
+class TaskRequest<chain_t> final : public TaskRequestBase {
 public:
     TaskRequest(const chain_t& chain) :
         block(chain.cbegin()),
@@ -128,7 +128,7 @@ public:
         TaskRequestBase(Now() + delay)
         {};
 
-    virtual ~TaskRequest() {};
+    ~TaskRequest() {};
 
     TaskRequest<chain_t>& operator++() {
         if (block_end != block) {
@@ -175,11 +175,11 @@ private:
 
 /** \brief Scheduler for trillek engine
  */
-class TrillekScheduler {
+class TrillekScheduler final {
 public:
     // one frame has a duration of 16666666 nanoseconds
     TrillekScheduler() : counter(0), one_frame(16666666) {};
-    virtual ~TrillekScheduler() {};
+    ~TrillekScheduler() {};
 
     /** \brief Launch the threads and attach them to system
      *

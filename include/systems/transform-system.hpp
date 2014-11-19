@@ -19,7 +19,7 @@ class PhysicsSystem;
 
 // Stores a mapping of entity ID to transform that can
 // be accessed via static methods anywhere.
-class TransformMap : public util::Parser {
+class TransformMap final : public util::Parser {
 private:
     TransformMap() : Parser("transforms") { }
     TransformMap(const TransformMap& right) : Parser("transforms") {
