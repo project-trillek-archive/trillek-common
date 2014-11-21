@@ -35,7 +35,6 @@ public:
     reference& operator=(bool b) {
         T m(T(1) << offset);
         c = (c & ~m) | (-b & m);
-        if (b)
         return *this;
     };
 
