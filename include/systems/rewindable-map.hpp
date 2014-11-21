@@ -9,7 +9,7 @@
 namespace trillek {
 
 template<class L,class W>
-using SharedContainerConst = std::map<L,const W, std::less<L>,TrillekAllocator<std::pair<const L,W>>>;
+using SharedContainerConst = std::map<L,const W, std::less<L>>;
 
 template<class L,class W>
 using SharedContainer = std::map<L,W, std::less<L>,TrillekAllocator<std::pair<const L,W>>>;

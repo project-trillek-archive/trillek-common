@@ -216,8 +216,8 @@ public:
         unsigned int type_id = reflection::GetTypeID<T>();
         if (instance->graphic_components[type_id].find(entity_id) == instance->graphic_components[type_id].end()) {
             auto sharedcomp = std::make_shared<graphics::Container>(T());
-            sharedcomp->Get<T>().component_type_id = type_id;
-            if (!sharedcomp->Get<T>().Initialize(properties)) {
+            sharedcomp->template Get<T>().component_type_id = type_id;
+            if (!sharedcomp->template Get<T>().Initialize(properties)) {
                 instance->graphic_components[type_id].erase(entity_id);
                 return nullptr;
             }

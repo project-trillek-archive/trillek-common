@@ -46,7 +46,7 @@ struct ContainerRef {
 template<Component C>
 std::shared_ptr<Container> Initialize(const std::vector<Property> &properties) {
     return component::Create<C>(typename type_trait<C>::value_type());
-};
+}
 
 /** \brief Default initialization function for values
  *
@@ -63,7 +63,7 @@ template<Component C>
 typename type_trait<C>::value_type Initialize(bool& result, const std::vector<Property> &properties) {
     result = true;
     return typename type_trait<C>::value_type();
-};
+}
 
 /** \brief Apply a function to all entities in the bitmap
  *
@@ -78,7 +78,7 @@ static void OnTrue(const BitMap<T>& bitmap, const std::function<void(id_t)>& ope
     for (auto i = bitmap.enumerator(10000); *i < end; ++i) {
         operation(*i);
     }
-};
+}
 
 /** \brief Get the components container
  *
@@ -90,7 +90,7 @@ static void OnTrue(const BitMap<T>& bitmap, const std::function<void(id_t)>& ope
 template<Component C>
 static typename container_type_trait<C>::container_type& GetRawContainer() {
     return ContainerRef<typename container_type_trait<C>::container_type>::container;
-};
+}
 
 /** \brief Return the component value
  *
@@ -102,7 +102,7 @@ static typename container_type_trait<C>::container_type& GetRawContainer() {
  */
 template<Component C>
 static const typename type_trait<C>::value_type& Get(id_t entity_id, typename std::enable_if<!std::is_same<typename type_trait<C>::value_type,bool>::value>::type* = 0) {
-    return GetRawContainer<C>().Get<C>(entity_id);
+    return GetRawContainer<C>().template Get<C>(entity_id);
 }
 
 /** \brief Return the component value. bool version.
@@ -113,7 +113,7 @@ static const typename type_trait<C>::value_type& Get(id_t entity_id, typename st
  */
 template<Component C>
 static typename type_trait<C>::value_type Get(id_t entity_id, typename std::enable_if<std::is_same<typename type_trait<C>::value_type,bool>::value>::type* = 0) {
-    return GetRawContainer<C>().Get<C>(entity_id);
+    return GetRawContainer<C>().template Get<C>(entity_id);
 }
 
 /** \brief Return the pointer of the component value
@@ -128,7 +128,7 @@ static typename type_trait<C>::value_type Get(id_t entity_id, typename std::enab
  */
 template<Component C>
 std::shared_ptr<Container> GetContainer(id_t entity_id) {
-    return GetRawContainer<C>().GetContainer<C>(entity_id);
+    return GetRawContainer<C>().template GetContainer<C>(entity_id);
 }
 
 /** \brief Return the pointer of the component value. const version
@@ -143,7 +143,7 @@ std::shared_ptr<Container> GetContainer(id_t entity_id) {
  */
 template<Component C>
 std::shared_ptr<const Container> GetConstContainer(id_t entity_id) {
-    return GetRawContainer<C>().GetConstContainer<C>(entity_id);
+    return GetRawContainer<C>().template GetConstContainer<C>(entity_id);
 }
 
 /** \brief Return a pointer cast to the type of the component
@@ -154,7 +154,7 @@ std::shared_ptr<const Container> GetConstContainer(id_t entity_id) {
  */
 template<Component C>
 std::shared_ptr<const typename type_trait<C>::value_type> GetSharedPtr(id_t entity_id) {
-    return GetRawContainer<C>().GetSharedPtr<C>(entity_id);
+    return GetRawContainer<C>().template GetSharedPtr<C>(entity_id);
 }
 
 /** \brief Return a pointer cast to the const type of the component
@@ -165,7 +165,7 @@ std::shared_ptr<const typename type_trait<C>::value_type> GetSharedPtr(id_t enti
  */
 template<Component C>
 std::shared_ptr<const typename type_trait<C>::value_type> GetConstSharedPtr(id_t entity_id) {
-    return GetRawContainer<C>().GetSharedPtr<C>(entity_id);
+    return GetRawContainer<C>().template GetSharedPtr<C>(entity_id);
 }
 
 /** \brief Store a new component
@@ -176,7 +176,7 @@ std::shared_ptr<const typename type_trait<C>::value_type> GetConstSharedPtr(id_t
  */
 template<Component C, class V>
 static void Insert(id_t entity_id, V&& value) {
-    GetRawContainer<C>().Insert<C>(entity_id, std::forward<V>(value));
+    GetRawContainer<C>().template Insert<C>(entity_id, std::forward<V>(value));
 }
 
 /** \brief Modify the value of an existing component
@@ -187,7 +187,7 @@ static void Insert(id_t entity_id, V&& value) {
  */
 template<Component C, class V>
 static void Update(id_t entity_id, V&& value) {
-    GetRawContainer<C>().Update<C>(entity_id, std::forward<V>(value));
+    GetRawContainer<C>().template Update<C>(entity_id, std::forward<V>(value));
 }
 
 /** \brief Remove a component
@@ -197,7 +197,7 @@ static void Update(id_t entity_id, V&& value) {
  */
 template<Component C>
 static void Remove(id_t entity_id) {
-    GetRawContainer<C>().Remove<C>(entity_id);
+    GetRawContainer<C>().template Remove<C>(entity_id);
 }
 
 /** \brief Tell if a component exists
@@ -208,7 +208,7 @@ static void Remove(id_t entity_id) {
  */
 template<Component C>
 static bool Has(id_t entity_id) {
-    return GetRawContainer<C>().Has<C>(entity_id);
+    return GetRawContainer<C>().template Has<C>(entity_id);
 }
 
 /** \brief Returns the bitmap associated with the component
@@ -220,8 +220,8 @@ static bool Has(id_t entity_id) {
  */
 template<Component C>
 static const BitMap<uint32_t>& Bitmap() {
-    return GetRawContainer<C>().Bitmap<C>();
-};
+    return GetRawContainer<C>().template Bitmap<C>();
+}
 
 /** \brief Commit the data in the work space
  *
@@ -232,7 +232,7 @@ static const BitMap<uint32_t>& Bitmap() {
  */
 template<Component C>
 static void Commit(frame_tp frame) {
-    GetRawContainer<C>().Commit<C>(frame);
+    GetRawContainer<C>().template Commit<C>(frame);
 }
 
 /** \brief Get the updates from the last frame
@@ -245,7 +245,7 @@ template<Component C>
 static const std::map<id_t,const typename type_trait<C>::value_type, std::less<id_t>,
             TrillekAllocator<std::pair<const id_t,typename type_trait<C>::value_type>>>&
                                                          GetLastPositiveCommit() {
-    return GetRawContainer<C>().GetLastPositiveCommit<C>();
+    return GetRawContainer<C>().template GetLastPositiveCommit<C>();
 }
 
 /** \brief Get the bitmap associated with the updates from the last frame
@@ -256,7 +256,7 @@ static const std::map<id_t,const typename type_trait<C>::value_type, std::less<i
  */
 template<Component C>
 static const BitMap<uint32_t>& GetLastPositiveBitMap() {
-    return GetRawContainer<C>().GetLastPositiveBitMap<C>();
+    return GetRawContainer<C>().template GetLastPositiveBitMap<C>();
 }
 
 /** \brief Return a bitmap of component comparison
