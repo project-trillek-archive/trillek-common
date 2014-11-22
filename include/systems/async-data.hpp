@@ -256,8 +256,8 @@ public:
         {
             std::unique_lock<std::mutex> locker(m_current);
             std::unique_lock<std::mutex> locker2(m_current2);
-            current_frame = std::move(frame);
-            datas[current_frame] = std::forward<U>(data);
+            datas.erase(frame);
+            datas.emplace(std::make_pair(frame,std::forward<U>(data)));
             datas.erase(datas.begin());
         }
         ahead_request.notify_all();
@@ -320,7 +320,8 @@ private:
             std::unique_lock<std::mutex> locker(m_current);
             std::unique_lock<std::mutex> locker2(m_current2);
             if (frame <= current_frame) {
-                datas.at(frame) = std::forward<U>(data);
+                datas.erase(frame);
+                datas.emplace(std::make_pair(frame,std::forward<U>(data)));
                 return;
             }
         }
