@@ -171,7 +171,7 @@ public:
     bool at(size_t idx) const {
         auto offset = idx / BlockSize();
         if (offset >= size()) {
-            throw new std::out_of_range("Index does not exist");
+            throw std::out_of_range("Index does not exist");
         }
         if (offset >= last_block || offset < first_block) {
             return def_value;
