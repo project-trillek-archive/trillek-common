@@ -21,7 +21,7 @@ class Transform;
 
 namespace physics {
 
-class Collidable {
+class Collidable final {
 public:
     Collidable() : motion_state(nullptr) { }
     ~Collidable();

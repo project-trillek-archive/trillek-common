@@ -24,7 +24,7 @@ enum CPU_TYPE { TR3200, DCPU, DCPUN };
 typedef std::pair<std::shared_ptr<resource::PixelBuffer>, std::shared_ptr<dev::tda::TDADev>> ScreenImage;
 
 // Struct to hold various CPU specific items together.
-struct Computer {
+struct Computer final {
     Computer() : rom(new byte_t[32 * 1024]), rom_size(0) { }
     ~Computer() {
         if (this->rom) {
@@ -38,7 +38,7 @@ struct Computer {
     std::list<std::shared_ptr<IDevice>> devices;
 };
 
-class VComputerSystem : public SystemBase,
+class VComputerSystem final : public SystemBase,
     public event::Subscriber<KeyboardEvent> {
 public:
 

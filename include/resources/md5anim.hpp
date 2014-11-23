@@ -13,7 +13,7 @@ namespace resource {
 
 class Mesh;
 
-class MD5Anim : public ResourceBase {
+class MD5Anim final : public ResourceBase {
 public:
     MD5Anim() { }
     ~MD5Anim() { }

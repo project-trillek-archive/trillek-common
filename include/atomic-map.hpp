@@ -10,7 +10,7 @@ namespace trillek {
 /** \brief A thread-safe map implementation with atomic operations
  */
 template<class K,class T>
-class AtomicMap {
+class AtomicMap final {
 
 public:
 
@@ -22,7 +22,7 @@ public:
     /** \brief Default destructor
      *
      */
-    virtual ~AtomicMap() {};
+    ~AtomicMap() {};
 
     AtomicMap(const AtomicMap<K,T>& rhs) {
         this->q = rhs.q;

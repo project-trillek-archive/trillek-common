@@ -31,7 +31,7 @@ template<> inline std::string LogLevelString<L_INFO>() { return "INFO"; }
 template<> inline std::string LogLevelString<L_DEBUG>() { return "DEBUG"; }
 template<> inline std::string LogLevelString<L_DEBUG_FINE>() { return "FINE"; }
 
-class Logging {
+class Logging final {
 private:
     Logging();
     static std::unique_ptr<Logging> instance;
@@ -43,7 +43,7 @@ public:
     void WriteLine(std::string l, std::string section, std::string message);
 
     template<LogLevel T>
-    class LogLine {
+    class LogLine final {
     public:
         LogLine() : show(true), glob(true) { }
         LogLine(std::string system) : show(true), glob(false), systemname(system) { }

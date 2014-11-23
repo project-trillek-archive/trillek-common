@@ -11,7 +11,7 @@ static glm::vec3 FORWARD_VECTOR(0.0f, 0.0f, -1.0f);
 static glm::vec3 UP_VECTOR(0.0f, 1.0f, 0.0f);
 static glm::vec3 RIGHT_VECTOR(1.0f, 0.0f, 0.0f);
 
-class Transform {
+class Transform final {
 public:
     Transform() : Transform(0) {};
 

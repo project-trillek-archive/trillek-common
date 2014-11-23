@@ -38,10 +38,10 @@ typename SystemValueContainer<C,bool>::container_type SystemValueContainer<C,boo
 template<Component C>
 BitMap<uint32_t>& SystemValueContainer<C,bool>::bitmap = SystemValueContainer<C,bool>::container;
 
-class SystemValue {
+class SystemValue final {
 public:
     SystemValue() {};
-    virtual ~SystemValue() {};
+    ~SystemValue() {};
 
     template<Component type>
     typename type_trait<type>::value_type& Get(id_t entity_id, typename std::enable_if<!std::is_same<typename type_trait<type>::value_type,bool>::value>::type* = 0) {

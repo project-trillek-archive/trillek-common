@@ -25,7 +25,7 @@ TEST(ImageLoaderTest, PortableNetworkGraphic1) {
     util::void_er stat;
     std::ifstream file;
 
-    file.open("assets/tests/T1.png", std::ios::in | std::ios::binary);
+    file.open("common/assets/tests/T1.png", std::ios::in | std::ios::binary);
     EXPECT_TRUE(file.is_open());
     if(file.is_open()) {
         util::StdInputStream insf(file);
@@ -43,7 +43,7 @@ TEST(ImageLoaderTest, PortableNetworkGraphic2) {
     PixelBuffer image;
     util::void_er stat;
     std::ifstream file;
-    file.open("assets/tests/T2.png", std::ios::in | std::ios::binary);
+    file.open("common/assets/tests/T2.png", std::ios::in | std::ios::binary);
     EXPECT_TRUE(file.is_open());
     if(file.is_open()) {
         util::StdInputStream insf(file);
@@ -61,7 +61,7 @@ TEST(ImageLoaderTest, PortableNetworkGraphic3) {
     PixelBuffer image;
     util::void_er stat;
     std::ifstream file;
-    file.open("assets/tests/T3.png", std::ios::in | std::ios::binary);
+    file.open("common/assets/tests/T3.png", std::ios::in | std::ios::binary);
     EXPECT_TRUE(file.is_open());
     if(file.is_open()) {
         util::StdInputStream insf(file);
@@ -79,7 +79,7 @@ TEST(ImageLoaderTest, PortableNetworkGraphic4) {
     PixelBuffer image;
     util::void_er stat;
     std::ifstream file;
-    file.open("assets/tests/T4.png", std::ios::in | std::ios::binary);
+    file.open("common/assets/tests/T4.png", std::ios::in | std::ios::binary);
     EXPECT_TRUE(file.is_open());
     if(file.is_open()) {
         util::StdInputStream insf(file);
@@ -97,7 +97,7 @@ TEST(ImageLoaderTest, PortableNetworkGraphic5) {
     PixelBuffer image;
     util::void_er stat;
     std::ifstream file;
-    file.open("assets/tests/T5.png", std::ios::in | std::ios::binary);
+    file.open("common/assets/tests/T5.png", std::ios::in | std::ios::binary);
     EXPECT_TRUE(file.is_open());
     if(file.is_open()) {
         util::StdInputStream insf(file);
@@ -115,7 +115,7 @@ TEST(ImageLoaderTest, PortableNetworkGraphic6) {
     PixelBuffer image;
     util::void_er stat;
     std::ifstream file;
-    file.open("assets/tests/T6.png", std::ios::in | std::ios::binary);
+    file.open("common/assets/tests/T6.png", std::ios::in | std::ios::binary);
     EXPECT_TRUE(file.is_open());
     if(file.is_open()) {
         util::StdInputStream insf(file);

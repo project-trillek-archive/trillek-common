@@ -13,8 +13,8 @@ VComputerSystem::VComputerSystem() {
     this->gkeyb = std::make_shared<dev::gkeyboard::GKeyboardDev>();
 
     AddComputer(9000, TR3200);
-    if (LoadROMFile(9000, "assets/asm/TR3200/type1.ffi")) {
-        this->pixelBuffers[9000].first = resource::ResourceMap::Get<resource::PixelBuffer>("1005_assets/vidstand/Screen.png");
+    if (LoadROMFile(9000, "common/trillek-vcomputer-module/asm/tr3200/type1.ffi")) {
+        this->pixelBuffers[9000].first = resource::ResourceMap::Get<resource::PixelBuffer>("1005_common/assets/vidstand/Screen.png");
         this->pixelBuffers[9000].first->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
         this->pixelBuffers[9000].second = std::make_shared<dev::tda::TDADev>();
         SetDevice(9000, 5, this->pixelBuffers[9000].second);
@@ -26,8 +26,8 @@ VComputerSystem::VComputerSystem() {
     }
 
     AddComputer(9001, DCPUN);
-    if (LoadROMFile(9001, "assets/asm/dcpu16n/hello.ffi")) {
-        this->pixelBuffers[9001].first = resource::ResourceMap::Get<resource::PixelBuffer>("1004_assets/vidstand/Screen.png");
+    if (LoadROMFile(9001, "common/trillek-vcomputer-module/asm/dcpu16n/hello.ffi")) {
+        this->pixelBuffers[9001].first = resource::ResourceMap::Get<resource::PixelBuffer>("1004_common/assets/vidstand/Screen.png");
         this->pixelBuffers[9001].first->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
         this->pixelBuffers[9001].second = std::make_shared<dev::tda::TDADev>();
         SetDevice(9001, 5, this->pixelBuffers[9001].second);

@@ -20,7 +20,7 @@ namespace trillek {
     // Create a resource at compile time when type information is known.
     TEST(ResSysTest, CreateCompileTime) {
         std::vector<Property> props;
-        Property p("filename", std::string("assets/tests/test.txt"));
+        Property p("filename", std::string("common/assets/tests/test.txt"));
         props.push_back(p);
 
         std::shared_ptr<TextFile> file = ResourceMap::Create<TextFile>("test", props);
@@ -41,7 +41,7 @@ namespace trillek {
     // Create a resource at runtime when type information is not known.
     TEST(ResSysTest, CreateRunTime) {
         std::vector<Property> props;
-        Property p("filename", std::string("assets/tests/test.txt"));
+        Property p("filename", std::string("common/assets/tests/test.txt"));
         props.push_back(p);
 
         // If we have a valid type id retrieved from within resource system, then registtration was valid.
@@ -73,7 +73,7 @@ namespace trillek {
     // Create a resource at runtime when type information is not known.
     TEST(ResSysTest, CreateInvalidType) {
         std::vector<Property> props;
-        Property p("filename", std::string("assets/tests/test.txt"));
+        Property p("filename", std::string("common/assets/tests/test.txt"));
         props.push_back(p);
 
         // If we have a valid type id retrieved from within resource system, then registtration was valid.
@@ -89,7 +89,7 @@ namespace trillek {
     // Attempt to create a resource that already has been created. It should return the already created resource.
     TEST(ResSysTest, CreateAlreadyCreated) {
         std::vector<Property> props;
-        Property p("filename", std::string("assets/tests/test.txt"));
+        Property p("filename", std::string("common/assets/tests/test.txt"));
         props.push_back(p);
 
         std::shared_ptr<TextFile> file = ResourceMap::Create<TextFile>("test", props);
@@ -108,7 +108,7 @@ namespace trillek {
         std::shared_ptr<TextFile> file(new TextFile());
 
         std::vector<Property> props;
-        Property p("filename", std::string("assets/tests/test.txt"));
+        Property p("filename", std::string("common/assets/tests/test.txt"));
         props.push_back(p);
 
         file->Initialize(props);
@@ -132,7 +132,7 @@ namespace trillek {
         std::shared_ptr<TextFile> file(new TextFile());
 
         std::vector<Property> props;
-        Property p("filename", std::string("assets/tests/test.txt"));
+        Property p("filename", std::string("common/assets/tests/test.txt"));
         props.push_back(p);
 
         file->Initialize(props);

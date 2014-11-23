@@ -27,7 +27,7 @@ using History = std::pair<HistoryMap<SharedContainerConst<L,W>>,HistoryMap<Share
  * HistorySize is the capacity of the history of commits.
  */
 template<class K, class V, class Timepoint, int HistorySize>
-class RewindableMap {
+class RewindableMap final {
 
     typedef TrillekAllocator<std::pair<const K,V>> allocator_type;
     typedef TrillekAllocator<std::pair<const K,const V>> const_allocator_type;
@@ -258,7 +258,7 @@ public:
             }
         }
         auto el1 = backward_data.GetHistoryData(frame_requested, last_received);
-        return { std::move(el1), forward_data.PopSync(frame_requested, last_received) };
+        return History<K, V>(std::move(el1), forward_data.PopSync(frame_requested, last_received));
     }
 
     /** \brief Pull the most recent history since last visit. Thread-safe.
@@ -279,7 +279,7 @@ public:
      */
     History<K,V> Pull(const Timepoint& frame_requested, Timepoint& last_received) const {
         auto el1 = backward_data.GetHistoryData(frame_requested, last_received);
-        return { std::move(el1), forward_data.PopSync(frame_requested, last_received) };
+        return History<K, V>(std::move(el1), forward_data.PopSync(frame_requested, last_received));
     }
 
 private:

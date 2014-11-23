@@ -15,9 +15,7 @@ enum class ImageColorMode : uint32_t {
     COLOR_RGBA = 6,
 };
 
-class PixelBuffer;
-
-class PixelBuffer : public ResourceBase {
+class PixelBuffer final : public ResourceBase {
 public:
     /**
      * \brief Returns a resource with the specified name.
@@ -28,7 +26,7 @@ public:
     bool Initialize(const std::vector<Property> &properties);
 
     PixelBuffer();
-    virtual ~PixelBuffer();
+    ~PixelBuffer();
 
     PixelBuffer(const PixelBuffer &) = delete;
     PixelBuffer & operator=(const PixelBuffer &) = delete;

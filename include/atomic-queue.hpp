@@ -12,7 +12,7 @@ namespace trillek {
 /** \brief A thread-safe queue implementation with atomic operations
  */
 template<class T>
-class AtomicQueue {
+class AtomicQueue final {
 
     template<class U>
     using atomic_queue = std::list<U, TrillekAllocator<U>>;
@@ -27,7 +27,7 @@ class AtomicQueue {
         /** \brief Destructor
          *
          */
-        virtual ~AtomicQueue() {};
+        ~AtomicQueue() {};
 
         // disable copy functions
         AtomicQueue(AtomicQueue&) = delete;

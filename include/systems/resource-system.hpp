@@ -16,7 +16,7 @@ namespace resource {
 class ResourceBase {
 public:
     ResourceBase() { }
-    ~ResourceBase() { }
+    virtual ~ResourceBase() { }
 
     /**
      * \brief Returns a resource with the specified name.
@@ -28,7 +28,7 @@ public:
 };
 
 // Singleton approach derived from http://silviuardelean.ro/2012/06/05/few-singleton-approaches/ .
-class ResourceMap : public util::Parser {
+class ResourceMap final : public util::Parser {
 private:
     ResourceMap() : Parser("resources") { }
     ResourceMap(const ResourceMap& right) : Parser("resources") {

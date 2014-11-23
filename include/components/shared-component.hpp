@@ -25,10 +25,10 @@ public:
 template<Component C>
 RewindableMap<id_t, bool,frame_tp,30> SharedContainer<C,bool>::container;
 
-class Shared {
+class Shared final {
 public:
     Shared() {};
-    virtual ~Shared() {};
+    ~Shared() {};
 
     template<Component type>
     const typename type_trait<type>::value_type& Get(id_t entity_id) {

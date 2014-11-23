@@ -11,7 +11,7 @@ namespace trillek {
 /** \brief An history object
  */
 template<class T>
-class HistoryMap {
+class HistoryMap final {
 public:
     typedef typename std::map<frame_tp,T>::const_iterator iter_type;
 
@@ -40,7 +40,7 @@ private:
 /** \brief A reverse history object
  */
 template<class T>
-class ReverseHistoryMap {
+class ReverseHistoryMap final {
 public:
     typedef typename std::reverse_iterator<typename HistoryMap<T>::iter_type> iter_type;
 
@@ -68,7 +68,7 @@ private:
  * Historysize is the size of the history
  */
 template<class T,int HistorySize = 30>
-class AsyncFrameData {
+class AsyncFrameData final {
     typedef std::map<frame_tp,T> content_map;
 public:
     AsyncFrameData() : current_frame(-1) {

@@ -12,7 +12,7 @@
 namespace trillek {
 namespace resource {
 
-class OBJ : public Mesh {
+class OBJ final : public Mesh {
 public:
     OBJ() { }
     ~OBJ() { }

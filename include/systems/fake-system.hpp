@@ -6,12 +6,12 @@
 
 namespace trillek {
 
-class FakeSystem : public SystemBase {
+class FakeSystem final : public SystemBase {
 
 public:
 
     FakeSystem() {};
-    virtual ~FakeSystem() {};
+    ~FakeSystem() {};
 
     void HandleEvents(frame_tp timepoint) override {
         LOGMSGC(DEBUG) << "handle events of frame " << timepoint;

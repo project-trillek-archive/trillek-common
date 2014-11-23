@@ -19,7 +19,7 @@ public:
 
 // Dispatches data change notifications to the various subscribers.
 template <typename T>
-class Dispatcher {
+class Dispatcher final {
 private:
     Dispatcher() { }
     Dispatcher(const Dispatcher& right) {

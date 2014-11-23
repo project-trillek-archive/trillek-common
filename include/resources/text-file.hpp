@@ -7,7 +7,7 @@
 namespace trillek {
 namespace resource {
 
-class TextFile : public ResourceBase {
+class TextFile final : public ResourceBase {
 public:
     TextFile() { }
     ~TextFile() { }

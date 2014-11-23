@@ -36,7 +36,7 @@ private:
  *
  */
 template<Component C, class T=typename type_trait<C>::value_type>
-class ContainerObject : public Container {
+class ContainerObject final : public Container {
     typedef T content_type;
 
 public:
@@ -53,13 +53,12 @@ public:
     ContainerObject& operator=(const ContainerObject &that) = delete;
 
     // Move
-    ContainerObject(ContainerObject&& that) : content(std::move(that.content)) {
-    }
+    ContainerObject(ContainerObject&& that) : content(std::move(that.content)) {};
 
     ContainerObject& operator=(ContainerObject&& that) {
         this->content = std::move(that.content);
         return *this;
-    }
+    };
 private:
     content_type content;
 };
