@@ -54,8 +54,11 @@ public:
         auto comp = CreateComponent<C>(entity_id, properties);
 
         if (comp) {
-            LOGMSG(DEBUG) << "Adding system component " << reflection::GetTypeName<std::integral_constant<Component,C>>() << " to entity #" << entity_id;
+            LOGMSG(DEBUG) << "Adding system component "
+                << reflection::GetTypeName<std::integral_constant<Component,C>>()
+                << " to entity #" << entity_id;
             system.Map<C>().insert(std::make_pair(std::move(entity_id), std::move(comp)));
+            SystemContainer<C>::bitmap[entity_id] = true;
             return true;
         }
         return false;
@@ -74,7 +77,7 @@ public:
         auto comp = component::Initialize<type>(result, properties);
         if (!result) {
             LOGMSGC(ERROR) << "Error while initializing component "
-                            << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
+                << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
             return false;
         }
 
@@ -97,11 +100,14 @@ public:
         auto comp = component::Initialize<type>(result, properties);
         if (!result) {
             LOGMSGC(ERROR) << "Error while initializing component "
-                            << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
+                << reflection::GetTypeName<std::integral_constant<Component,type>>()
+                << " for entity id #" << entity_id;
             return false;
         }
 
-        LOGMSG(DEBUG) << "Adding system component " << reflection::GetTypeName<std::integral_constant<Component,type>>() << " to entity #" << entity_id;
+        LOGMSG(DEBUG) << "Adding system component "
+            << reflection::GetTypeName<std::integral_constant<Component,type>>()
+            << " to entity #" << entity_id;
         system.Insert<type>(entity_id, std::move(comp));
         return true;
     }
@@ -120,11 +126,14 @@ public:
         auto comp = component::Initialize<type>(result, properties);
         if (!result) {
             LOGMSGC(ERROR) << "Error while initializing component "
-                            << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
+                << reflection::GetTypeName<std::integral_constant<Component,type>>()
+                << " for entity id #" << entity_id;
             return false;
         }
 
-        LOGMSG(DEBUG) << "Adding system component " << reflection::GetTypeName<std::integral_constant<Component,type>>() << " to entity #" << entity_id;
+        LOGMSG(DEBUG) << "Adding system component "
+            << reflection::GetTypeName<std::integral_constant<Component,type>>()
+            << " to entity #" << entity_id;
         system.Insert<type>(entity_id, std::move(comp));
         return true;
     }
@@ -143,11 +152,14 @@ public:
         auto comp = component::Initialize<type>(result, properties);
         if (!result) {
             LOGMSGC(ERROR) << "Error while initializing component "
-                            << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
+                << reflection::GetTypeName<std::integral_constant<Component,type>>()
+                << " for entity id #" << entity_id;
             return false;
         }
 
-        LOGMSG(DEBUG) << "Adding system component " << reflection::GetTypeName<std::integral_constant<Component,type>>() << " to entity #" << entity_id;
+        LOGMSG(DEBUG) << "Adding system component "
+            << reflection::GetTypeName<std::integral_constant<Component,type>>()
+            << " to entity #" << entity_id;
         system.Insert<type>(entity_id, std::move(comp));
         return true;
     }
@@ -165,7 +177,9 @@ public:
         auto comp = CreateComponent<type>(entity_id, properties);
 
         if (comp) {
-            LOGMSG(DEBUG) << "Adding shared component " << reflection::GetTypeName<std::integral_constant<Component, type>>() << " to entity #" << entity_id;
+            LOGMSG(DEBUG) << "Adding shared component "
+                << reflection::GetTypeName<std::integral_constant<Component, type>>()
+                << " to entity #" << entity_id;
             shared.Map<type>().Insert(entity_id, std::move(comp));
             return true;
         }
