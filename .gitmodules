@@ -8,6 +8,7 @@
 [submodule "crypto++"]
 	path = crypto++
 	url = https://github.com/catageek/cryptopp
+	depth = 1
 	ignore = dirty
 [submodule "kqueue"]
 	path = kqueue
