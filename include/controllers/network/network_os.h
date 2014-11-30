@@ -1,6 +1,12 @@
 #ifndef INCL_NETWORKOS
 #define INCL_NETWORKOS
 
+/** \brief Adapted from Netport
+ *
+ * see https://github.com/Meisaka/NetPort/
+ */
+
+
 #include <iostream>
 #include <memory>
 #include <string>

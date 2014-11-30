@@ -3,6 +3,11 @@
 
 #include <string>
 
+/** \brief Adapted from Netport
+ *
+ * see https://github.com/Meisaka/NetPort/
+ */
+
 namespace trillek { namespace network {
 #ifdef WIN32
 #if defined(_WIN64)

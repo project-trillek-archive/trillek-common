@@ -7,6 +7,7 @@
 #include "sys/event.h"
 #include "sys/time.h"
 #include <iostream>
+#include <mutex>
 
 namespace trillek { namespace network {
 

@@ -116,7 +116,7 @@ public:
      * \param minor unsigned char the minor code of the message
      *
      */
-    void Send(id_t id, unsigned char major, unsigned char minor);
+    void SendTCP(id_t id, unsigned char major, unsigned char minor);
 
     /** \brief Send a message to a server using TCP
      *
@@ -124,7 +124,7 @@ public:
      * \param minor unsigned char the minor code of the message
      *
      */
-    void Send(unsigned char major, unsigned char minor);
+    void SendTCP(unsigned char major, unsigned char minor);
 
     /** \brief Resize the internal buffer.
      *

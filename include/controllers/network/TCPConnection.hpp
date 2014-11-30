@@ -3,6 +3,10 @@
 #include "controllers/network/network_common.hpp"
 
 namespace trillek { namespace network {
+    /** \brief Adapted from Netport
+     *
+     * see https://github.com/Meisaka/NetPort/
+     */
 	class TCPConnection final {
 	public:
 		TCPConnection(void);
