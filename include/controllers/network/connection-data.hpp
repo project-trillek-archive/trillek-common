@@ -136,6 +136,8 @@ public:
         return TCPConnection();
     };
 
+    TCPConnection& GetTCPConnection() const { return _connection; };
+
 
 private:
     // connection write is protected by _auth_state single-threaded transition. no read
