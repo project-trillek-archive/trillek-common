@@ -35,7 +35,6 @@ public:
     reference& operator=(bool b) {
         T m(T(1) << offset);
         c = (c & ~m) | (-b & m);
-        if (b)
         return *this;
     };
 
@@ -170,9 +169,6 @@ public:
     // Access to an element of the BitSet
     bool at(size_t idx) const {
         auto offset = idx / BlockSize();
-        if (offset >= size()) {
-            throw std::out_of_range("Index does not exist");
-        }
         if (offset >= last_block || offset < first_block) {
             return def_value;
         }
@@ -211,6 +207,13 @@ public:
         if (offset < last_block && offset >= first_block) {
             (*this)[idx] = def_value;
         }
+    }
+
+    void clear() {
+        bitarray.clear();
+        first_block = 0;
+        last_block = 0;
+        bsize = 0;
     }
 
     const size_t size() const {
@@ -287,7 +290,7 @@ private:
         for (size_t j = 0; j < first_size; ++j) {
             result.push_back(operation(first_left.bitarray.at(j), last_left.def_value));
         }
-        if (first_size || last_size) {
+        if (a.size() && b.size()) {
             if (middle_left == last_left.first_block) {
                 for(size_t j = first_size, k = 0 ; k < middle_right - middle_left; ++k, ++j) {
                     result.push_back(operation(first_left.bitarray.at(j), last_left.bitarray.at(k)));

@@ -9,10 +9,10 @@
 namespace trillek {
 
 template<class L,class W>
-using SharedContainerConst = std::map<L,const W, std::less<L>,TrillekAllocator<std::pair<const L,W>>>;
+using SharedContainerConst = std::map<L,const W, std::less<L>>;
 
 template<class L,class W>
-using SharedContainer = std::map<L,W, std::less<L>,TrillekAllocator<std::pair<const L,W>>>;
+using SharedContainer = std::map<L,W, std::less<L>>;
 
 template<class L,class W>
 using History = std::pair<HistoryMap<SharedContainerConst<L,W>>,HistoryMap<SharedContainerConst<L,W>>>;
@@ -299,7 +299,9 @@ private:
                 for (auto itdata = itmap_erase->second.cbegin(); itdata != itmap_erase->second.cend(); ++itdata) {
                     datas.erase(itdata->first);
                 }
-                for (auto itdata2 = itmap_add->second.cbegin(); itdata2 != itmap_add->second.cend(); ++itdata2) {
+
+                const auto& itend2 = itmap_add->second.cend();
+                for (auto itdata2 = itmap_add->second.cbegin(); itdata2 != itend2; ++itdata2) {
                     datas[itdata2->first] = itdata2->second;
                 }
             }
@@ -334,7 +336,8 @@ private:
             for (auto itdata_erase = rem_it->second.cbegin(); itdata_erase != rem_it->second.cend(); ++itdata_erase) {
                 datas.erase(itdata_erase->first);
             }
-            for (auto itdata = add_it->second.cbegin(); itdata != add_it->second.cend(); ++itdata) {
+            const auto& itend = add_it->second.cend();
+            for (auto itdata = add_it->second.cbegin(); itdata != itend; ++itdata) {
                 datas[itdata->first] = itdata->second;
             }
         }
