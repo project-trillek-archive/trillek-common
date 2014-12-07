@@ -14,21 +14,21 @@ struct ContainerRef<System> {
     static System& container;
 };
 
-System& ContainerRef<System>::container = TrillekGame::GetSystemComponent();
+System& ContainerRef<System>::container = game.GetSystemComponent();
 
 template<>
 struct ContainerRef<SystemValue> {
     static SystemValue& container;
 };
 
-SystemValue& ContainerRef<SystemValue>::container = TrillekGame::GetSystemValueComponent();
+SystemValue& ContainerRef<SystemValue>::container = game.GetSystemValueComponent();
 
 template<>
 struct ContainerRef<Shared> {
     static Shared& container;
 };
 
-Shared& ContainerRef<Shared>::container = TrillekGame::GetSharedComponent();
+Shared& ContainerRef<Shared>::container = game.GetSharedComponent();
 
 template<>
 std::shared_ptr<Container> Initialize<Component::VelocityMax>(const std::vector<Property> &properties) {
@@ -70,11 +70,11 @@ id_t Initialize<Component::ReferenceFrame>(bool& result, const std::vector<Prope
         std::string name = p.GetName();
         if (name == "entity") {
             reference_id = p.Get<id_t>();
-            if (! TrillekGame::GetSharedComponent().Has<Component::Velocity>(reference_id)) {
+            if (! game.GetSharedComponent().Has<Component::Velocity>(reference_id)) {
                 LOGMSG(ERROR) << "ReferenceFrame: entity #" << reference_id << "does not have velocity";
                 return 0;
             }
-            ref_velocity = TrillekGame::GetSharedComponent().Get<Component::Velocity>(reference_id);
+            ref_velocity = game.GetSharedComponent().Get<Component::Velocity>(reference_id);
             result = true;
         }
         else if (name == "entity_id") {
@@ -86,8 +86,8 @@ id_t Initialize<Component::ReferenceFrame>(bool& result, const std::vector<Prope
     }
     if (result) {
         // create IsReferenceFrame and CombinedVelocity components
-        TrillekGame::GetSystemValueComponent().Insert<Component::IsReferenceFrame>(reference_id, true);
-        TrillekGame::GetSystemComponent().Insert<Component::CombinedVelocity>(entity_id, ref_velocity);
+        game.GetSystemValueComponent().Insert<Component::IsReferenceFrame>(reference_id, true);
+        game.GetSystemComponent().Insert<Component::CombinedVelocity>(entity_id, ref_velocity);
         return reference_id;
     }
     return 0;

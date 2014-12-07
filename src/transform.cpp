@@ -48,7 +48,7 @@ void Transform::SetRotation(const glm::vec3 new_rotation) {
         this->orientation.w * this->orientation.w - this->orientation.x *
         this->orientation.x - this->orientation.y * this->orientation.y +
         this->orientation.z * this->orientation.z);
-    this->rotation.y = glm::asin(-2.0f * (this->orientation.x * this->orientation.z - this->orientation.w * this->orientation.y));
+    this->rotation.y = glm::asin(2.0f * (this->orientation.x * this->orientation.z - this->orientation.w * this->orientation.y));
     this->rotation.z = atan2(2.0f * (this->orientation.x * this->orientation.y +
         this->orientation.w * this->orientation.z),
         this->orientation.w * this->orientation.w + this->orientation.x *
@@ -63,7 +63,7 @@ void Transform::SetOrientation(const glm::quat new_orientation) {
         this->orientation.w * this->orientation.w - this->orientation.x *
         this->orientation.x - this->orientation.y * this->orientation.y +
         this->orientation.z * this->orientation.z);
-    this->rotation.y = glm::asin(-2.0f * (this->orientation.x * this->orientation.z - this->orientation.w * this->orientation.y));
+    this->rotation.y = glm::asin(2.0f * (this->orientation.x * this->orientation.z - this->orientation.w * this->orientation.y));
     this->rotation.z = atan2(2.0f * (this->orientation.x * this->orientation.y +
         this->orientation.w * this->orientation.z),
         this->orientation.w * this->orientation.w + this->orientation.x *

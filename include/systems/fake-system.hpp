@@ -15,15 +15,15 @@ public:
 
     void HandleEvents(frame_tp timepoint) override {
         LOGMSGC(DEBUG) << "handle events of frame " << timepoint;
-    };
+    }
 
     void RunBatch() const override {
         LOGMSGC(DEBUG) << "run batch";
-    };
+    }
 
     void Terminate() override {
         LOGMSGC(DEBUG) << "terminating";
-    };
+    }
 };
 }
 

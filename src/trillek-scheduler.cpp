@@ -16,9 +16,9 @@ std::function<void(std::shared_ptr<TaskRequest<chain_t>>&&,frame_unit&&)> TaskRe
 
 scheduler_tp TaskRequestBase::Now() const {
 #if defined(_MSC_VER)
-    return scheduler_tp(TrillekGame::GetOS().GetTime());
+    return scheduler_tp(game.GetOS().GetTime());
 #else
-//    return scheduler_tp(TrillekGame::GetOS().GetTime());
+//    return scheduler_tp(game.GetOS().GetTime());
     return scheduler_tp{std::chrono::steady_clock::now()};
 #endif
 }
@@ -28,7 +28,7 @@ void TrillekScheduler::Initialize(unsigned int nr_thread, std::queue<SystemBase*
     std::list<std::thread> thread_list;
     // initialize
 #if defined(_MSC_VER)
-    scheduler_tp now = scheduler_tp(TrillekGame::GetOS().GetTime());
+    scheduler_tp now = scheduler_tp(game.GetOS().GetTime());
 #else
     scheduler_tp now{std::chrono::steady_clock::now()};
 #endif
@@ -82,7 +82,7 @@ void TrillekScheduler::DayWork(const scheduler_tp& now, SystemBase* system) {
 #if defined(_MSC_VER)
             while (taskqueue.empty()
                    || ! taskqueue.top()->IsNow()
-                   || scheduler_tp(TrillekGame::GetOS().GetTime()) >= next_frame_tp) {
+                   || scheduler_tp(game.GetOS().GetTime()) >= next_frame_tp) {
 #else
             while (taskqueue.empty()
                    || ! taskqueue.top()->IsNow()
@@ -97,7 +97,7 @@ void TrillekScheduler::DayWork(const scheduler_tp& now, SystemBase* system) {
                     // we are here because we reached a timeout
                     // release the lock of the blocking point
                     m_timer.unlock();
-                    if (TrillekGame::GetTerminateFlag()) {
+                    if (game.GetTerminateFlag()) {
                         LOGMSGC(INFO) << "Scheduler: Terminate signal detected for this thread...";
                         // unblock all other threads waiting above
                         queuecheck.notify_all();
@@ -108,7 +108,7 @@ void TrillekScheduler::DayWork(const scheduler_tp& now, SystemBase* system) {
                         return;
                     }
 #if defined(_MSC_VER)
-                    if (scheduler_tp(TrillekGame::GetOS().GetTime()) >= next_frame_tp) {
+                    if (scheduler_tp(game.GetOS().GetTime()) >= next_frame_tp) {
 #else
                     if (std::chrono::steady_clock::now() >= next_frame_tp) {
 #endif

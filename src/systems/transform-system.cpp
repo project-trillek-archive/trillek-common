@@ -14,23 +14,23 @@ std::shared_ptr<TransformMap> TransformMap::instance = nullptr;
 bool TransformMap::Serialize(rapidjson::Document& document) {
     rapidjson::Value transform_node(rapidjson::kObjectType);
 
-    for (auto& entity_transform_wrapped : TrillekGame::GetSharedComponent().Map<Component::GameTransform>().Map()) {
+    for (auto& entity_transform_wrapped : game.GetSharedComponent().Map<Component::GameTransform>().Map()) {
         auto& entity_transform = *Get<Component::GameTransform>(entity_transform_wrapped.second);
         rapidjson::Value transform_object(rapidjson::kObjectType);
 
-        rapidjson::Value translation_element(rapidjson::kObjectType);
+        rapidjson::Value translation_element(rapidjson::kArrayType);
         glm::vec3 translation = entity_transform.GetTranslation();
-        translation_element.AddMember("x", translation.x, document.GetAllocator());
-        translation_element.AddMember("y", translation.y, document.GetAllocator());
-        translation_element.AddMember("z", translation.z, document.GetAllocator());
+        translation_element.PushBack(translation.x, document.GetAllocator());
+        translation_element.PushBack(translation.y, document.GetAllocator());
+        translation_element.PushBack(translation.z, document.GetAllocator());
         transform_object.AddMember("position", translation_element, document.GetAllocator());
 
-        rapidjson::Value rotation_element(rapidjson::kObjectType);
+        rapidjson::Value rotation_element(rapidjson::kArrayType);
         glm::vec3 rotation = entity_transform.GetRotation();
-        rotation_element.AddMember("radians", true, document.GetAllocator());
-        rotation_element.AddMember("x", rotation.x, document.GetAllocator());
-        rotation_element.AddMember("y", rotation.y, document.GetAllocator());
-        rotation_element.AddMember("z", rotation.z, document.GetAllocator());
+        rotation_element.PushBack("radians", document.GetAllocator());
+        rotation_element.PushBack(rotation.x, document.GetAllocator());
+        rotation_element.PushBack(rotation.y, document.GetAllocator());
+        rotation_element.PushBack(rotation.z, document.GetAllocator());
         transform_object.AddMember("rotation", rotation_element, document.GetAllocator());
 
         rapidjson::Value scale_element(rapidjson::kObjectType);
@@ -81,16 +81,22 @@ bool TransformMap::Parse(rapidjson::Value& node) {
                     auto& element = entity_itr->value["position"];
 
                     double x = 0.0f, y = 0.0f, z = 0.0f;
-                    if (element.HasMember("x") && element["x"].IsNumber()) {
-                        x = element["x"].GetDouble();
+                    if(element.IsArray()) {
+                        x = element[0u].GetDouble();
+                        y = element[1].GetDouble();
+                        z = element[2].GetDouble();
                     }
-                    if (element.HasMember("y") && element["y"].IsNumber()) {
-                        y = element["y"].GetDouble();
+                    else {
+                        if (element.HasMember("x") && element["x"].IsNumber()) {
+                            x = element["x"].GetDouble();
+                        }
+                        if (element.HasMember("y") && element["y"].IsNumber()) {
+                            y = element["y"].GetDouble();
+                        }
+                        if (element.HasMember("z") && element["z"].IsNumber()) {
+                            z = element["z"].GetDouble();
+                        }
                     }
-                    if (element.HasMember("z") && element["z"].IsNumber()) {
-                        z = element["z"].GetDouble();
-                    }
-
                     entity_transform.SetTranslation(glm::vec3(x, y, z));
                 }
                 if (entity_itr->value.HasMember("rotation")) {
@@ -98,27 +104,55 @@ bool TransformMap::Parse(rapidjson::Value& node) {
 
                     bool in_radians = false;
 
-                    if (element.HasMember("radians") && element["radians"].IsBool()) {
-                        in_radians = element["radians"].GetBool();
-                    }
-
                     double x = 0.0f, y = 0.0f, z = 0.0f;
-                    if (element.HasMember("x") && element["x"].IsNumber()) {
-                        x = element["x"].GetDouble();
-                        if (!in_radians) {
-                            x = glm::radians(x);
+                    if(element.IsArray()) {
+                        rapidjson::SizeType szu = 0;
+                        rapidjson::SizeType lim = element.Size();
+                        int p = 0;
+                        for(; szu < lim; szu++) {
+                            if(element[szu].IsString()) {
+                                if(std::string(element[szu].GetString(), element[szu].GetStringLength()) == "radians") {
+                                    in_radians = true;
+                                }
+                            }
+                            else {
+                                if(p < 3) {
+                                    if(p == 0) {
+                                        x = element[szu].GetDouble();
+                                    }
+                                    else if(p == 1) {
+                                        y = element[szu].GetDouble();
+                                    }
+                                    else {
+                                        z = element[szu].GetDouble();
+                                    }
+                                }
+                                p++;
+                            }
                         }
                     }
-                    if (element.HasMember("y") && element["y"].IsNumber()) {
-                        y = element["y"].GetDouble();
-                        if (!in_radians) {
-                            y = glm::radians(y);
+                    else {
+                        if (element.HasMember("radians") && element["radians"].IsBool()) {
+                            in_radians = element["radians"].GetBool();
                         }
-                    }
-                    if (element.HasMember("z") && element["z"].IsNumber()) {
-                        z = element["z"].GetDouble();
-                        if (!in_radians) {
-                            z = glm::radians(z);
+
+                        if (element.HasMember("x") && element["x"].IsNumber()) {
+                            x = element["x"].GetDouble();
+                            if (!in_radians) {
+                                x = glm::radians(x);
+                            }
+                        }
+                        if (element.HasMember("y") && element["y"].IsNumber()) {
+                            y = element["y"].GetDouble();
+                            if (!in_radians) {
+                                y = glm::radians(y);
+                            }
+                        }
+                        if (element.HasMember("z") && element["z"].IsNumber()) {
+                            z = element["z"].GetDouble();
+                            if (!in_radians) {
+                                z = glm::radians(z);
+                            }
                         }
                     }
 
@@ -140,7 +174,7 @@ bool TransformMap::Parse(rapidjson::Value& node) {
 
                     entity_transform.SetScale(glm::vec3(x, y, z));
                 }
-                TrillekGame::GetSharedComponent().Insert<Component::GameTransform>(entity_id, std::move(entity_transform));
+                game.GetSharedComponent().Insert<Component::GameTransform>(entity_id, std::move(entity_transform));
             }
         }
 
