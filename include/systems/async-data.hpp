@@ -213,8 +213,9 @@ public:
      *
      */
     T GetCommit(const frame_tp& frame) const {
-        std::unique_lock<std::mutex> locker(m_current);
-        std::unique_lock<std::mutex> locker2(m_current2);
+        std::unique_lock<std::mutex> locker(m_current, std::defer_lock);
+        std::unique_lock<std::mutex> locker2(m_current2, std::defer_lock);
+        std::lock(locker, locker2);
         if (datas.count(frame)) {
             return datas.at(frame);
         }
@@ -254,8 +255,9 @@ public:
     template<class U=const T>
     void Publish(U&& data, frame_tp frame) {
         {
-            std::unique_lock<std::mutex> locker(m_current);
-            std::unique_lock<std::mutex> locker2(m_current2);
+            std::unique_lock<std::mutex> locker(m_current, std::defer_lock);
+            std::unique_lock<std::mutex> locker2(m_current2, std::defer_lock);
+            std::lock(locker, locker2);
             current_frame = std::move(frame);
             datas.erase(current_frame);
             datas.emplace(std::make_pair(current_frame,std::forward<U>(data)));
@@ -318,8 +320,9 @@ private:
     template<class U=const T>
     void Amend(U&& data, const frame_tp& frame) {
         {
-            std::unique_lock<std::mutex> locker(m_current);
-            std::unique_lock<std::mutex> locker2(m_current2);
+            std::unique_lock<std::mutex> locker(m_current, std::defer_lock);
+            std::unique_lock<std::mutex> locker2(m_current2, std::defer_lock);
+            std::lock(locker, locker2);
             if (frame <= current_frame) {
                 datas.erase(frame);
                 datas.emplace(std::make_pair(frame,std::forward<U>(data)));

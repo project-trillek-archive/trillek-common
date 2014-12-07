@@ -16,6 +16,7 @@ VComputerSystem::VComputerSystem() {
     if (LoadROMFile(9000, "common/trillek-vcomputer-module/asm/tr3200/type1.ffi")) {
         this->pixelBuffers[9000].first = resource::ResourceMap::Get<resource::PixelBuffer>("1005_common/assets/vidstand/Screen.png");
         this->pixelBuffers[9000].first->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
+        this->pixelBuffers[9000].first->meta.push_back(Property("wrap", std::string("clamp")));
         this->pixelBuffers[9000].second = std::make_shared<dev::tda::TDADev>();
         SetDevice(9000, 5, this->pixelBuffers[9000].second);
         SetDevice(9000, 1, gkeyb);
@@ -93,7 +94,7 @@ void VComputerSystem::HandleEvents(frame_tp timepoint) {
     static frame_tp last_tp;
     this->delta = frame_unit(timepoint - last_tp);
     last_tp = timepoint;
-    auto count = this->delta.count();
+    auto count = this->delta.count() * 0.000000001;
     for (auto& comp : this->computers) {
         comp.second.vc->Update(count);
     }
