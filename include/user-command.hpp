@@ -2,6 +2,7 @@
 #define IORDER_HPP_INCLUDED
 
 #include "components/component.hpp"
+#include "trillek-game.hpp"
 
 namespace trillek {
 namespace usercommand {
@@ -9,10 +10,15 @@ namespace usercommand {
     using namespace trillek::component;
 
     void Execute(id_t id, std::shared_ptr<component::Container>&& usercommand) {
-        switch(usercommand->GetTypeId()) {
-        case (static_cast<uint32_t>(Component::Velocity)) : {
+        switch(static_cast<Component>(usercommand->GetTypeId())) {
+        case Component::Velocity : {
             Update<Component::Velocity>(id, std::move(usercommand));
         }
+        break;
+        case Component::Movable : {
+            Update<Component::Movable>(id, *Get<Component::Movable>(usercommand).get());
+        }
+        break;
         }
     }
 

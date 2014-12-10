@@ -17,18 +17,16 @@ namespace component {
  */
 class Container {
 public:
-    typedef std::underlying_type<Component>::type component_type;
-
     template<Component C>
-    bool Is() const { return static_cast<component_type>(C) == type; };
+    bool Is() const { return static_cast<Component>(C) == type; };
 
-    component_type GetTypeId() const { return type; };
+    Component GetTypeId() const { return type; };
 
 protected:
-    Container(component_type n) : type(n) {};
+    Container(Component n) : type(n) {};
 
 private:
-    component_type type;
+    Component type;
 };
 
 /**
@@ -41,7 +39,7 @@ class ContainerObject final : public Container {
 
 public:
     template<class U>
-    ContainerObject(U&& comp) : Container(static_cast<component_type>(C)), content(std::forward<U>(comp)) {};
+    ContainerObject(U&& comp) : Container(static_cast<Component>(C)), content(std::forward<U>(comp)) {};
 
     ~ContainerObject() {};
 

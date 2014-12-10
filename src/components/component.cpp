@@ -146,5 +146,26 @@ uint32_t Initialize<Component::Health>(bool& result, const std::vector<Property>
     return health;
 }
 
+template<>
+bool Initialize<Component::Movable>(bool& result, const std::vector<Property> &properties) {
+    id_t entity_id;
+    result = false;
+    bool movable = false;
+    for (const Property& p : properties) {
+        std::string name = p.GetName();
+        if (name == "movable") {
+            movable = p.Get<bool>();
+        }
+        else if (name == "entity_id") {
+            entity_id = p.Get<id_t>();
+            result = true;
+        }
+        else {
+            LOGMSG(ERROR) << "Movable: Unknown property: " << name;
+        }
+    }
+    return movable;
+}
+
 } // namespace component
 } // namespace trillek

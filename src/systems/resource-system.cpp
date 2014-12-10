@@ -1,4 +1,5 @@
 #include "systems/resource-system.hpp"
+#include "logging.hpp"
 
 namespace trillek {
 namespace resource {
@@ -68,13 +69,22 @@ bool ResourceMap::Parse(rapidjson::Value& node) {
                                 Property p(property_name, property_value);
                                 props.push_back(p);
                             }
+                            else {
+                                LOGMSG(WARNING) << "Resource-system: Unknown value type";
+                            }
                         }
+                    }
+                    else {
+                        LOGMSG(WARNING) << "Resource-system: Unknown value type";
                     }
 
                     if (!Create(resource_type, resource_name, props)) {
-                        // TODO: Log an error about creating this resource.
+                        LOGMSG(WARNING) << "Resource-system: Error creating resource " << resource_type;
                     }
                 }
+            }
+            else {
+                LOGMSG(WARNING) << "Resource-system: Unknown resource type";
             }
         }
 

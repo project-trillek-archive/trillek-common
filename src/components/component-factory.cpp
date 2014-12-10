@@ -103,10 +103,16 @@ bool ComponentFactory::Parse(rapidjson::Value& node) {
                                         }
                                     }
                                 }
+                                else {
+                                    LOGMSG(WARNING) << "component-factory: Unknown value type";
+                                }
                             }
                             if (!Create(component_type_id, entity_id, props)) {
-                                // TODO: Log an error about creating this component.
+                                LOGMSG(WARNING) << "component-factory: Creating component failed";
                             }
+                        }
+                        else {
+                            LOGMSG(WARNING) << "component-factory: Badly formed component json";
                         }
                     }
                 }

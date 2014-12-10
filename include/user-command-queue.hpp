@@ -26,7 +26,7 @@ public:
      */
     template<class T>
     void AddCommand(id_t id, T&& usercommand) const {
-        temp_command_list.Insert(std::move(id), std::forward<T>(usercommand));
+        temp_command_list.Push(std::pair<id_t, T>(std::move(id), std::forward<T>(usercommand)));
     };
 
     /** \brief Get the list of temporary user commands, and tag them
@@ -67,7 +67,7 @@ private:
     // The underlying storage
     usercommand_map_type command_queue;
     // the temporary storage
-    AtomicMap<id_t,std::shared_ptr<component::Container>> temp_command_list;
+    AtomicQueue<std::pair<id_t,std::shared_ptr<component::Container>>> temp_command_list;
 };
 
 } //namespace trillek
