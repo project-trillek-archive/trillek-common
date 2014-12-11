@@ -14,9 +14,13 @@ VComputerSystem::VComputerSystem() {
 
     AddComputer(9000, TR3200);
     if (LoadROMFile(9000, "common/trillek-vcomputer-module/asm/tr3200/type1.ffi")) {
-        this->pixelBuffers[9000].first = resource::ResourceMap::Get<resource::PixelBuffer>("1005_common/assets/vidstand/Screen.png");
-        this->pixelBuffers[9000].first->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
-        this->pixelBuffers[9000].first->meta.push_back(Property("wrap", std::string("clamp")));
+        auto pixa = resource::ResourceMap::Get<resource::PixelBuffer>("1005_common/assets/vidstand/Screen.png");
+        pixa->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
+        pixa->meta.push_back(Property("wrap", std::string("clamp")));
+        pixa->meta.push_back(Property("mip", true));
+        pixa->meta.push_back(Property("mag-filter", std::string("linear")));
+        pixa->meta.push_back(Property("min-filter", std::string("linear-mip-linear")));
+        this->pixelBuffers[9000].first = pixa;
         this->pixelBuffers[9000].second = std::make_shared<dev::tda::TDADev>();
         SetDevice(9000, 5, this->pixelBuffers[9000].second);
         SetDevice(9000, 1, gkeyb);
@@ -28,8 +32,13 @@ VComputerSystem::VComputerSystem() {
 
     AddComputer(9001, DCPUN);
     if (LoadROMFile(9001, "common/trillek-vcomputer-module/asm/dcpu16n/hello.ffi")) {
-        this->pixelBuffers[9001].first = resource::ResourceMap::Get<resource::PixelBuffer>("1004_common/assets/vidstand/Screen.png");
-        this->pixelBuffers[9001].first->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
+        auto pixa = resource::ResourceMap::Get<resource::PixelBuffer>("1004_common/assets/vidstand/Screen.png");
+        pixa->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
+        pixa->meta.push_back(Property("wrap", std::string("clamp")));
+        pixa->meta.push_back(Property("mip", true));
+        pixa->meta.push_back(Property("mag-filter", std::string("linear")));
+        pixa->meta.push_back(Property("min-filter", std::string("linear-mip-linear")));
+        this->pixelBuffers[9001].first = pixa;
         this->pixelBuffers[9001].second = std::make_shared<dev::tda::TDADev>();
         SetDevice(9001, 5, this->pixelBuffers[9001].second);
         SetDevice(9001, 1, gkeyb);
