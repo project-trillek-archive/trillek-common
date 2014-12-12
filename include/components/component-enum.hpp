@@ -44,7 +44,8 @@ enum class Component : uint32_t {
     OxygenRate,                 // Oxygen rate associated with an entity (room...)
     Health,                     // Health level
     Immune,                     // true = Immune
-    Movable,                    // true = Movable
+    Movable,                    // true = Movable, Moving can be changed by players
+    Moving,                     // true = Actively moving
     MoveOffset,                 // transform representing the offset to another object
     GraphicTransform,           // transform used to display the entity
     GameTransform               // last confirmed transform
@@ -65,6 +66,7 @@ TRILLEK_MAKE_COMPONENT(OxygenRate,"oxygen-rate",float_t,SystemValue)
 TRILLEK_MAKE_COMPONENT(Health,"health",uint32_t,SystemValue)
 TRILLEK_MAKE_COMPONENT(Immune,"immune",bool,SystemValue)
 TRILLEK_MAKE_COMPONENT(Movable,"movable",bool,SystemValue)
+TRILLEK_MAKE_COMPONENT(Moving,"moving",bool,SystemValue)
 TRILLEK_MAKE_COMPONENT(MoveOffset,"move-offset",trillek::Transform,System)
 TRILLEK_MAKE_COMPONENT(GraphicTransform,"graphic-transform",trillek::Transform, Shared)
 TRILLEK_MAKE_COMPONENT(GameTransform,"game-transform",trillek::Transform, Shared)

@@ -40,7 +40,7 @@ public:
      *
      * \param[in] unsigned int entity_id The ID of the entity to get the transform for.
      */
-    void SetEntity(unsigned int entity_id);
+    void SetEntity(id_t entity_id);
 
     /**
      * \brief Initilizes the rigied body after the shape has been initialized.
@@ -59,11 +59,14 @@ public:
      */
     void UpdateTransform();
 
+    id_t GetEntityID() const { return entity_num; }
 private:
     double radius; // Used for sphere and capsule shape collidable.
     double height; // Used for capsule shape collidable.
     btScalar mass; // For static objects mass must be 0.
     bool disable_deactivation; // Whether to disable automatic deactivation.
+    bool disable_rotation; // prevent rotation from physics simulation.
+    id_t entity_num; // entity id that raycasts resolve to (this)
 
     std::shared_ptr<btTriangleMesh> mesh; // Used for mesh shape collidable.
     std::shared_ptr<resource::Mesh> mesh_file; // Used for mesh shape collidable.

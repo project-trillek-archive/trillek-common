@@ -19,6 +19,10 @@ namespace usercommand {
             Update<Component::Movable>(id, *Get<Component::Movable>(usercommand).get());
         }
         break;
+        case Component::Moving : {
+            Update<Component::Moving>(id, *Get<Component::Moving>(usercommand).get());
+        }
+        break;
         }
     }
 

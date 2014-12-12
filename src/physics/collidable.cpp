@@ -46,7 +46,8 @@ bool Collidable::Initialize(const std::vector<Property> &properties) {
     this->radius = 1.0;
     this->height = 1.0;
     this->mass = 1.0;
-    unsigned int entity_id;
+    this->disable_rotation = false;
+    id_t entity_id;
     for (const Property& p : properties) {
         std::string name = p.GetName();
         if (name == "radius") {
@@ -66,6 +67,9 @@ bool Collidable::Initialize(const std::vector<Property> &properties) {
         }
         else if (name == "mesh") {
             mesh_name = p.Get<std::string>();
+        }
+        else if(name == "rotation") {
+            disable_rotation = !p.Get<bool>();
         }
         else if (name == "entity_id") {
             entity_id = p.Get<unsigned int>();
@@ -121,10 +125,11 @@ bool Collidable::Initialize(const std::vector<Property> &properties) {
     return InitializeRigidBody();
 }
 
-void Collidable::SetEntity(unsigned int entity_id) {
+void Collidable::SetEntity(id_t entity_id) {
     auto& entity_transform = game.GetSharedComponent().Get<component::Component::GameTransform>(entity_id);
     auto pos = entity_transform.GetTranslation();
     auto orientation = entity_transform.GetOrientation();
+    this->entity_num = entity_id;
     this->motion_state = new btDefaultMotionState(btTransform(
         btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w), btVector3(pos.x, pos.y, pos.z)));
 }
@@ -143,13 +148,14 @@ bool Collidable::InitializeRigidBody() {
         return false;
     }
 
+    this->body->setUserPointer(this);
     // Check if we want to disable automatic deactivation for this body.
     if (this->disable_deactivation) {
         this->body->forceActivationState(DISABLE_DEACTIVATION);
     }
 
     // Prevent objects from rotating from physics system.
-    this->body->setAngularFactor(btVector3(0, 0, 0));
+    if(disable_rotation) this->body->setAngularFactor(btVector3(0, 0, 0));
 
     game.GetPhysicsSystem().AddBodyToWorld(this->body.get());
 
