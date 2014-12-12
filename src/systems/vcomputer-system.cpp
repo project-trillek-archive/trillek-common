@@ -1,19 +1,18 @@
 #include "systems/vcomputer-system.hpp"
 
-#include "VComputer.hpp"
-#include "TR3200/TR3200.hpp"
-#include "DCPU16N/DCPU16N.hpp"
-#include "Auxiliar.hpp"
+#include "vcomputer.hpp"
+#include "tr3200/tr3200.hpp"
+#include "auxiliar.hpp"
 #include "trillek.hpp"
+#include "logging.hpp"
 
 namespace trillek {
 
-using namespace vm;
 VComputerSystem::VComputerSystem() {
-    this->gkeyb = std::make_shared<dev::gkeyboard::GKeyboardDev>();
+    this->gkeyb = std::make_shared<computer::gkeyboard::GKeyboardDev>();
 
     AddComputer(9000, TR3200);
-    if (LoadROMFile(9000, "common/trillek-vcomputer-module/asm/tr3200/type1.ffi")) {
+    if (LoadROMFile(9000, "meisys.ffi")) {
         auto pixa = resource::ResourceMap::Get<resource::PixelBuffer>("1005_common/assets/vidstand/Screen.png");
         pixa->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
         pixa->meta.push_back(Property("wrap", std::string("clamp")));
@@ -21,52 +20,37 @@ VComputerSystem::VComputerSystem() {
         pixa->meta.push_back(Property("mag-filter", std::string("linear")));
         pixa->meta.push_back(Property("min-filter", std::string("linear-mip-linear")));
         this->pixelBuffers[9000].first = pixa;
-        this->pixelBuffers[9000].second = std::make_shared<dev::tda::TDADev>();
+        this->pixelBuffers[9000].second = std::make_shared<computer::tda::TDADev>();
         SetDevice(9000, 5, this->pixelBuffers[9000].second);
         SetDevice(9000, 1, gkeyb);
-        TurnComptuerOn(9000);
+        ComputerPowerOn(9000);
     }
     else {
         RemoveComputer(9000);
     }
 
-    AddComputer(9001, DCPUN);
-    if (LoadROMFile(9001, "common/trillek-vcomputer-module/asm/dcpu16n/hello.ffi")) {
-        auto pixa = resource::ResourceMap::Get<resource::PixelBuffer>("1004_common/assets/vidstand/Screen.png");
-        pixa->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
-        pixa->meta.push_back(Property("wrap", std::string("clamp")));
-        pixa->meta.push_back(Property("mip", true));
-        pixa->meta.push_back(Property("mag-filter", std::string("linear")));
-        pixa->meta.push_back(Property("min-filter", std::string("linear-mip-linear")));
-        this->pixelBuffers[9001].first = pixa;
-        this->pixelBuffers[9001].second = std::make_shared<dev::tda::TDADev>();
-        SetDevice(9001, 5, this->pixelBuffers[9001].second);
-        SetDevice(9001, 1, gkeyb);
-        TurnComptuerOn(9001);
-    }
-    else {
-        RemoveComputer(9001);
-    }
     event::Dispatcher<KeyboardEvent>::GetInstance()->Subscribe(this);
 };
 
 VComputerSystem::~VComputerSystem() { }
 
 void VComputerSystem::AddComputer(const id_t entity_id, CPU_TYPE type) {
-    std::unique_ptr<VComputer> vc(new VComputer());
-    if (type == TR3200) {
-        std::unique_ptr<cpu::TR3200> trcpu(new cpu::TR3200());
-        vc->SetCPU(std::move(trcpu));
-        this->computers[entity_id].vc = std::move(vc);
+    std::unique_ptr<computer::VComputer> vc(new computer::VComputer());
+    std::unique_ptr<computer::ICPU> cpu;
+    switch(type) {
+    case TR3200:
+        cpu.reset(new computer::TR3200());
+        break;
+    default:
+        LOGMSGC(ERROR) << "Unsupported CPU Type";
     }
-    else if (type == DCPUN) {
-        std::unique_ptr<cpu::DCPU16N> dcpu(new cpu::DCPU16N());
-        vc->SetCPU(std::move(dcpu));
+    if(cpu) {
+        vc->SetCPU(std::move(cpu));
         this->computers[entity_id].vc = std::move(vc);
     }
 }
 
-void VComputerSystem::SetDevice(const id_t entity_id, const unsigned int slot, std::shared_ptr<IDevice> device) {
+void VComputerSystem::SetDevice(const id_t entity_id, const unsigned int slot, std::shared_ptr<computer::IDevice> device) {
     if (this->computers.find(entity_id) != this->computers.end()) {
         this->computers[entity_id].vc->AddDevice(slot, device);
         this->computers[entity_id].devices.push_back(device);
@@ -108,9 +92,9 @@ void VComputerSystem::HandleEvents(frame_tp timepoint) {
         comp.second.vc->Update(count);
     }
     for (auto& pbuffer : this->pixelBuffers) {
-        dev::tda::TDAScreen screen;
+        computer::tda::TDAScreen screen;
         pbuffer.second.second->DumpScreen(screen);
-        dev::tda::TDAtoRGBATexture(screen, (dword_t*)pbuffer.second.first->LockWrite());
+        computer::tda::TDAtoRGBATexture(screen, (DWord*)pbuffer.second.first->LockWrite());
         pbuffer.second.first->UnlockWrite();
         pbuffer.second.first->Invalidate();
     }
@@ -120,27 +104,36 @@ void VComputerSystem::HandleEvents(frame_tp timepoint) {
 bool VComputerSystem::LoadROMFile(const id_t entity_id, std::string fname) {
     if (this->computers.find(entity_id) != this->computers.end()) {
         auto& vc = this->computers[entity_id].vc;
-        int size = aux::LoadROM(fname, this->computers[entity_id].rom);
+        int size = computer::LoadROM(fname, this->computers[entity_id].rom.get());
         if (size < 0) {
-            std::fprintf(stderr, "An error hapen when was reading the file %s\n", fname.c_str());
+            LOGMSGC(ERROR) << "failed reading the ROM file " << fname;
             return false;
         }
         this->computers[entity_id].rom_size = size;
-        vc->SetROM(this->computers[entity_id].rom, this->computers[entity_id].rom_size);
+        vc->SetROM(this->computers[entity_id].rom.get(), this->computers[entity_id].rom_size);
         return true;
     }
     return false;
 }
 
-void VComputerSystem::TurnComptuerOn(const id_t entity_id) {
-    if (this->computers.find(entity_id) != this->computers.end()) {
-        this->computers[entity_id].vc->On();
+void VComputerSystem::ComputerPowerOn(const id_t entity_id) {
+    auto vci = this->computers.find(entity_id);
+    if(vci != this->computers.end()) {
+        vci->second.vc->On();
     }
 }
 
-void VComputerSystem::TurnComptuerOff(const id_t entity_id) {
-    if (this->computers.find(entity_id) != this->computers.end()) {
-        this->computers[entity_id].vc->Off();
+void VComputerSystem::ComputerPowerOff(const id_t entity_id) {
+    auto vci = this->computers.find(entity_id);
+    if(vci != this->computers.end()) {
+        vci->second.vc->Off();
+    }
+}
+
+void VComputerSystem::ComputerReset(const id_t entity_id) {
+    auto vci = this->computers.find(entity_id);
+    if(vci != this->computers.end()) {
+        vci->second.vc->Reset();
     }
 }
 
@@ -149,7 +142,7 @@ void VComputerSystem::AddComponent(const id_t entity_id, std::shared_ptr<Compone
 void VComputerSystem::Notify(const KeyboardEvent* key_event) {
     switch (key_event->action) {
     case KeyboardEvent::KEY_DOWN:
-        this->gkeyb->SendKeyEvent(key_event->scancode, key_event->key, dev::gkeyboard::KEY_MODS::MOD_NONE);
+        this->gkeyb->SendKeyEvent(key_event->scancode, key_event->key, computer::gkeyboard::KEY_MODS::KEY_MOD_NONE);
     default:
         break;
     }
