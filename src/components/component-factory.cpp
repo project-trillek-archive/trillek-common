@@ -101,6 +101,15 @@ bool ComponentFactory::Parse(rapidjson::Value& node) {
                                                 props.push_back(p);
                                             }
                                         }
+                                        else if(array_itr->IsBool()) {
+                                            std::vector<bool> values;
+                                            for( ; array_itr != component_property_itr->value.End(); array_itr++) {
+                                                if(array_itr->IsBool()) {
+                                                    values.push_back(array_itr->GetBool());
+                                                }
+                                            }
+                                            props.push_back(Property(component_property_name, std::move(values)));
+                                        }
                                     }
                                 }
                                 else {

@@ -13,7 +13,11 @@ VComputerSystem::VComputerSystem() {
 
     AddComputer(9000, TR3200);
     if (LoadROMFile(9000, "meisys.ffi")) {
-        auto pixa = resource::ResourceMap::Get<resource::PixelBuffer>("1005_common/assets/vidstand/Screen.png");
+        auto pixa = resource::ResourceMap::Get<resource::PixelBuffer>("1005%0");
+        if(!pixa) {
+            RemoveComputer(9000);
+            return;
+        }
         pixa->Create(320, 240, 8, resource::ImageColorMode::COLOR_RGBA);
         pixa->meta.push_back(Property("wrap", std::string("clamp")));
         pixa->meta.push_back(Property("mip", true));
