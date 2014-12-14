@@ -94,15 +94,6 @@ id_t Initialize<Component::ReferenceFrame>(bool& result, const std::vector<Prope
 }
 
 template<>
-std::shared_ptr<Container> Initialize<Component::Collidable>(const std::vector<Property> &properties) {
-    auto ret = component::Create<Component::Collidable>(physics::Collidable());
-    if (component::Get<Component::Collidable>(ret)->Initialize(properties)) {
-        return std::move(ret);
-    }
-    return nullptr;
-}
-
-template<>
 float_t Initialize<Component::OxygenRate>(bool& result, const std::vector<Property> &properties) {
     id_t entity_id;
     auto oxygen_rate = 20.0f;       // default value;

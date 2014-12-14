@@ -65,7 +65,7 @@ public:
     template<Component type>
     void Remove(id_t entity_id) {
         Map<type>().erase(entity_id);
-        SystemContainer<type>::bitmap.at(entity_id) = false;
+        SystemContainer<type>::bitmap[entity_id] = false;
     }
 
     template<Component C>

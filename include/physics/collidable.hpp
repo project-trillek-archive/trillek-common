@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "type-id.hpp"
+#include "components/component.hpp"
 
 namespace trillek {
 
@@ -21,7 +22,7 @@ class Transform;
 
 namespace physics {
 
-class Collidable final {
+class Collidable final : public ComponentBase {
 public:
     Collidable() : motion_state(nullptr) { }
     ~Collidable();
