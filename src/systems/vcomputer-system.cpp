@@ -3,7 +3,7 @@
 #include "trillek-game.hpp"
 #include "components/component.hpp"
 #include "components/system-component.hpp"
-#include "devices/cpu.hpp"
+#include "hardware/cpu.hpp"
 #include "trillek.hpp"
 #include "logging.hpp"
 
