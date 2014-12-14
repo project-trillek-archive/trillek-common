@@ -110,6 +110,15 @@ bool ComponentFactory::Parse(rapidjson::Value& node) {
                                             }
                                             props.push_back(Property(component_property_name, std::move(values)));
                                         }
+                                        else if(array_itr->IsString()) {
+                                            std::vector<std::string> values;
+                                            for( ; array_itr != component_property_itr->value.End(); array_itr++) {
+                                                if(array_itr->IsString()) {
+                                                    values.push_back(std::string(array_itr->GetString(), array_itr->GetStringLength()));
+                                                }
+                                            }
+                                            props.push_back(Property(component_property_name, std::move(values)));
+                                        }
                                     }
                                 }
                                 else {

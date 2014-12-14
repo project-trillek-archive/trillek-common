@@ -22,6 +22,7 @@ namespace trillek {
 
 class Property;
 class Transform;
+class Interaction;
 
 namespace physics {
 class Collidable;
@@ -55,6 +56,7 @@ enum class Component : uint32_t {
     MoveOffset,                 // transform representing the offset to another object
     GraphicTransform,           // transform used to display the entity
     GameTransform,              // last confirmed transform
+    Interactable,               // Has interactions
     VComputer,                  // Virtual computer and CPU
     VKeyboard,                  // Keyboard for virtual computers
     VDisplay,                   // Display for a virtual computer
@@ -79,6 +81,7 @@ TRILLEK_MAKE_COMPONENT(Moving,"moving",bool,SystemValue)
 TRILLEK_MAKE_COMPONENT(MoveOffset,"move-offset",trillek::Transform,System)
 TRILLEK_MAKE_COMPONENT(GraphicTransform,"graphic-transform",trillek::Transform, Shared)
 TRILLEK_MAKE_COMPONENT(GameTransform,"game-transform",trillek::Transform, Shared)
+TRILLEK_MAKE_COMPONENT(Interactable,"interaction",trillek::Interaction, System)
 TRILLEK_MAKE_COMPONENT(VComputer,"trillek-computer",trillek::hw::Computer, System)
 TRILLEK_MAKE_COMPONENT(VKeyboard,"keyboard",trillek::hw::VKeyboard, System)
 TRILLEK_MAKE_COMPONENT(VDisplay,"display",trillek::hw::VDisplay, System)
