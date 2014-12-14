@@ -17,8 +17,9 @@ namespace trillek {
 
 using namespace component;
 
-VComputerSystem::VComputerSystem() {
+VComputerSystem::VComputerSystem() : system(game.GetSystemComponent()) {
     event::Dispatcher<KeyboardEvent>::GetInstance()->Subscribe(this);
+    event::EventQueue<HardwareAction>::Subscribe(this);
 };
 
 VComputerSystem::~VComputerSystem() { }
@@ -28,6 +29,7 @@ void VComputerSystem::HandleEvents(frame_tp timepoint) {
     this->delta = frame_unit(timepoint - last_tp);
     last_tp = timepoint;
     auto count = this->delta.count() * 0.000000001;
+    event::ProcessEvents<HardwareAction>();
     OnTrue(Bitmap<Component::VComputer>(),
         [&](id_t entity_id) {
             auto& vcom = Get<Component::VComputer>(entity_id);
@@ -42,6 +44,14 @@ void VComputerSystem::HandleEvents(frame_tp timepoint) {
             disp.surface->UnlockWrite();
             disp.surface->Invalidate();
         });
+}
+
+void VComputerSystem::OnEvent(const HardwareAction& event) {
+    if(!Has<Component::VDisplay>(event.entity_id)) {
+        return;
+    }
+    auto& disp = system.Get<Component::VDisplay>(event.entity_id);
+    disp.LinkDevice();
 }
 
 void VComputerSystem::Notify(const KeyboardEvent* key_event) {

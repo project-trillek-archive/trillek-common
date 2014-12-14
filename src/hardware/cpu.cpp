@@ -1,9 +1,11 @@
 
+#include "hardware/cpu.hpp"
 #include "trillek-game.hpp"
 #include "components/component.hpp"
 #include "components/system-component.hpp"
 #include "systems/resource-system.hpp"
-#include "hardware/cpu.hpp"
+#include "systems/vcomputer-system.hpp"
+#include "event-queue.hpp"
 #include "logging.hpp"
 
 #include "vcomputer.hpp"
@@ -99,9 +101,27 @@ void Computer::ComputerReset() {
     vc->Reset();
 }
 
+bool VHardware::LinkDevice() {
+    using namespace component;
+    if(entity_link > 0 && Has<component::Component::VComputer>(entity_link)) {
+        auto& vcr = game.GetSystemComponent().Get<Component::VComputer>(entity_link);
+        vcr.SetDevice(this->slot, this->device);
+        this->linked = true;
+        LOGMSG(INFO) << "Hardware: Successfully linked " << entity_id;
+        return true;
+    }
+    else {
+        this->linked = false;
+        return false;
+    }
+}
+
+void VHardware::QueueLinkDevice() {
+    event::QueueEvent(HardwareAction(HardwareAction::ATTACH, entity_id));
+}
+
 bool VDisplay::Initialize(const std::vector<Property> &properties) {
     using namespace component;
-    id_t entity_id;
     uint32_t instid = 0;
     entity_link = 0;
     slot = 2;
@@ -148,21 +168,14 @@ bool VDisplay::Initialize(const std::vector<Property> &properties) {
     pixa->meta.push_back(Property("mag-filter", std::string("linear")));
     pixa->meta.push_back(Property("min-filter", std::string("linear-mip-linear")));
     this->surface = pixa;
-    if(entity_link > 0 && Has<component::Component::VComputer>(entity_link)) {
-        auto& vcr = game.GetSystemComponent().Get<Component::VComputer>(entity_link);
-        vcr.SetDevice(this->slot, this->device);
-        this->linked = true;
-        LOGMSG(INFO) << "VDisplay: Successfully installed";
-    }
-    else {
-        this->linked = false;
-    }
+
+    QueueLinkDevice();
+
     return true;
 }
 
 bool VKeyboard::Initialize(const std::vector<Property> &properties) {
     using namespace component;
-    id_t entity_id;
     slot = 1;
 
     std::string modelname("generic");
@@ -187,7 +200,7 @@ bool VKeyboard::Initialize(const std::vector<Property> &properties) {
     }
 
     if(modelname == "generic") {
-        keyb.reset(new computer::gkeyboard::GKeyboardDev());
+        device.reset(new computer::gkeyboard::GKeyboardDev());
         keybapi = GENERIC;
     }
     else {
@@ -195,15 +208,8 @@ bool VKeyboard::Initialize(const std::vector<Property> &properties) {
         return false;
     }
 
-    if(entity_link > 0 && Has<component::Component::VComputer>(entity_link)) {
-        auto& vcr = game.GetSystemComponent().Get<Component::VComputer>(entity_link);
-        vcr.SetDevice(this->slot, this->keyb);
-        this->linked = true;
-        LOGMSG(INFO) << "VKeyboard: Successfully installed";
-    }
-    else {
-        this->linked = false;
-    }
+    QueueLinkDevice();
+
     return true;
 }
 

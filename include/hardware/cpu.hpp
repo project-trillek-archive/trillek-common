@@ -50,16 +50,38 @@ public:
     std::list<std::shared_ptr<computer::IDevice>> devices;
 };
 
+class VHardware {
+public:
+    VHardware() : linked(false), slot(0),
+        entity_id(0), entity_link(0) { }
+    virtual ~VHardware() {}
+    VHardware(VHardware&& v) :
+        device(std::move(v.device)),
+        entity_id(v.entity_id),
+        entity_link(v.entity_link),
+        slot(v.slot),
+        linked(v.linked) { }
+
+    std::shared_ptr<computer::IDevice> device;
+
+    bool LinkDevice();
+    void QueueLinkDevice();
+protected:
+    id_t entity_id;
+    id_t entity_link;
+    uint32_t slot;
+    bool linked;
+};
+
 /**
  * Class for computer displays
  */
-class VDisplay final : public PoweredDevice, public ComponentBase {
+class VDisplay final : public VHardware, public PoweredDevice, public ComponentBase {
 public:
     VDisplay() { }
     VDisplay(VDisplay&& v) { }
     VDisplay(const VDisplay&) = delete;
     ~VDisplay() {
-
     }
 
     /** Turns the display on.
@@ -72,25 +94,18 @@ public:
     bool Initialize(const std::vector<Property> &properties) override;
 
     std::shared_ptr<resource::PixelBuffer> surface;
-    std::shared_ptr<computer::IDevice> device;
-private:
-    id_t entity_link;
-    uint32_t slot;
-    bool linked;
+
 };
 
 /**
  * Class for keyboards
  */
-class VKeyboard final : public ComponentBase {
+class VKeyboard final : public VHardware, public ComponentBase {
 public:
-    VKeyboard() : keybapi(GENERIC), entity_link(0), linked(false) { }
-    VKeyboard(VKeyboard&& v) : keyb(std::move(v.keyb)) {
+    VKeyboard() : keybapi(GENERIC), VHardware::VHardware() { }
+    VKeyboard(VKeyboard&& v) : VHardware::VHardware(std::forward<VHardware>(v)) {
         this->component_type_id = v.component_type_id; // ComponentBase
         keybapi = v.keybapi;
-        entity_link = v.entity_link;
-        slot = v.slot;
-        linked = v.linked;
     }
     VKeyboard(const VKeyboard&) = delete;
     ~VKeyboard() {
@@ -101,12 +116,8 @@ public:
     enum VKeyAPI : uint32_t {
         GENERIC
     };
-    std::shared_ptr<computer::IDevice> keyb;
 private:
     VKeyAPI keybapi;
-    id_t entity_link;
-    uint32_t slot;
-    bool linked;
 };
 
 } // namespace hw

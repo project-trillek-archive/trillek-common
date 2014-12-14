@@ -5,14 +5,27 @@
 #include "system-base.hpp"
 #include <memory>
 #include "systems/dispatcher.hpp"
+#include "components/system-component.hpp"
+#include "event-queue.hpp"
 #include "os-event.hpp"
 
 namespace trillek {
 
 class ComponentBase;
 
+struct HardwareAction {
+    enum ActionType : uint32_t {
+        ATTACH,
+        REMOVE,
+    };
+    HardwareAction(ActionType a, id_t e) : act(a), entity_id(e) { }
+    ActionType act;
+    id_t entity_id;
+};
+
 class VComputerSystem final : public SystemBase,
-    public event::Subscriber<KeyboardEvent> {
+    public event::Subscriber<KeyboardEvent>,
+    public event::Handler<HardwareAction> {
 public:
 
     VComputerSystem();
@@ -20,7 +33,7 @@ public:
 
     /** \brief This function is executed when a thread is attached to the system
      */
-    virtual void ThreadInit() {};
+    void ThreadInit() override {};
 
     /** \brief Handle incoming events to update data
      *
@@ -31,7 +44,7 @@ public:
      * If event handling need some batch processing, a task list must be
      * prepared and stored temporarily to be retrieved by RunBatch().
      */
-    virtual void HandleEvents(frame_tp timepoint);
+    void HandleEvents(frame_tp timepoint) override;
 
     /** \brief Make all pre-update or post-update work.
      *
@@ -46,18 +59,20 @@ public:
      *
      * Note that this function is const, i.e the system is in read-only mode.
      */
-    virtual void RunBatch() const { }
+    void RunBatch() const override { }
 
     /** \brief Save the data and terminate the system
      *
      * This function is called when the program is closing
      */
-    virtual void Terminate() { }
+    void Terminate() override { }
 
-    void Notify(const KeyboardEvent* key_event);
+    void Notify(const KeyboardEvent* key_event) override;
+    void OnEvent(const HardwareAction&) override;
 private:
 
     frame_unit delta; // The time since the last HandleEvents was called.
+    component::System& system;
 };
 
 } // namespace trillek
