@@ -27,6 +27,12 @@ namespace physics {
 class Collidable;
 }
 
+namespace hw {
+class Computer;
+class VDisplay;
+class VKeyboard;
+}
+
 namespace component {
 
 class Container;
@@ -40,7 +46,7 @@ enum class Component : uint32_t {
     ReferenceFrame,             // id of the parent entity for the transform
     IsReferenceFrame,           // true if this entity has at least a child
     CombinedVelocity,           // ?
-    Collidable,                 // wrapper object for body TODO:make a true component
+    Collidable,                 // wrapper object for body
     OxygenRate,                 // Oxygen rate associated with an entity (room...)
     Health,                     // Health level
     Immune,                     // true = Immune
@@ -48,7 +54,10 @@ enum class Component : uint32_t {
     Moving,                     // true = Actively moving
     MoveOffset,                 // transform representing the offset to another object
     GraphicTransform,           // transform used to display the entity
-    GameTransform               // last confirmed transform
+    GameTransform,              // last confirmed transform
+    VComputer,                  // Virtual computer and CPU
+    VKeyboard,                  // Keyboard for virtual computers
+    VDisplay,                   // Display for a virtual computer
 };
 
 template<Component C> struct type_trait;
@@ -70,6 +79,9 @@ TRILLEK_MAKE_COMPONENT(Moving,"moving",bool,SystemValue)
 TRILLEK_MAKE_COMPONENT(MoveOffset,"move-offset",trillek::Transform,System)
 TRILLEK_MAKE_COMPONENT(GraphicTransform,"graphic-transform",trillek::Transform, Shared)
 TRILLEK_MAKE_COMPONENT(GameTransform,"game-transform",trillek::Transform, Shared)
+TRILLEK_MAKE_COMPONENT(VComputer,"trillek-computer",trillek::hw::Computer, System)
+TRILLEK_MAKE_COMPONENT(VKeyboard,"keyboard",trillek::hw::VKeyboard, System)
+TRILLEK_MAKE_COMPONENT(VDisplay,"display",trillek::hw::VDisplay, System)
 
 } // namespace trillek
 

@@ -13,6 +13,9 @@ public:
     PoweredDevice() {}
     virtual ~PoweredDevice() {}
 
+    virtual void PowerOn() = 0;
+    virtual void PowerOff() = 0;
+
 private:
 };
 
