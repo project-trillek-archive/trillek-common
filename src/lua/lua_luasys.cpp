@@ -16,7 +16,7 @@ int LuaSys_Get(lua_State* L) {
 
 int LuaSys_LoadFile(lua_State* L) {
     LuaSystem* sys = luaW_check<LuaSystem>(L, 1);
-    std::string fname = luaL_checkstring(L, 2);
+    std::string fname = luaU_to<std::string>(L, 2);
 
     luaU_push<bool>(L, sys->LoadFile(fname));
 
@@ -26,7 +26,7 @@ int LuaSys_LoadFile(lua_State* L) {
 int LuaSys_Subscribe(lua_State* L) {
     LuaSystem* sys = luaW_check<LuaSystem>(L, 1);
     int eventType = luaL_checkint(L, 2);
-    std::string function = luaL_checkstring(L, 3);
+    std::string function = luaU_to<std::string>(L, 3);
 
     sys->RegisterEventSubscriber(eventType, function);
 
@@ -34,7 +34,7 @@ int LuaSys_Subscribe(lua_State* L) {
 }
 
 int LuaLog(lua_State* L) {
-    LOGMSGFOR(INFO, LuaSystem) << lua_tostdstring(L, 1);
+    LOGMSGFOR(INFO, LuaSystem) << luaU_to<std::string>(L, 1);
     return 0;
 }
 

@@ -7,6 +7,7 @@
 #include "systems/dispatcher.hpp"
 #include "components/system-component.hpp"
 #include "event-queue.hpp"
+#include "interaction.hpp"
 #include "os-event.hpp"
 
 namespace trillek {
@@ -25,7 +26,8 @@ struct HardwareAction {
 
 class VComputerSystem final : public SystemBase,
     public event::Subscriber<KeyboardEvent>,
-    public event::Handler<HardwareAction> {
+    public event::LocalHandler<HardwareAction>,
+    public event::LocalHandler<InteractEvent> {
 public:
 
     VComputerSystem();
@@ -69,6 +71,7 @@ public:
 
     void Notify(const KeyboardEvent* key_event) override;
     void OnEvent(const HardwareAction&) override;
+    void OnEvent(const InteractEvent&) override;
 private:
 
     frame_unit delta; // The time since the last HandleEvents was called.

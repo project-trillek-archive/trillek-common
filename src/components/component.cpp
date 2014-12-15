@@ -2,6 +2,7 @@
 #include "property.hpp"
 #include "components/component-container.hpp"
 #include "physics/collidable.hpp"
+#include "interaction.hpp"
 #include "trillek-game.hpp"
 #include "components/system-component-value.hpp"
 #include "components/system-component.hpp"
@@ -154,6 +155,13 @@ bool Initialize<Component::Movable>(bool& result, const std::vector<Property> &p
         else {
             LOGMSG(ERROR) << "Movable: Unknown property: " << name;
         }
+    }
+    if(movable) {
+        if(!Has<Component::Interactable>(entity_id)) {
+            game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
+        }
+        auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
+        act.AddAction(Action::IA_MOVE);
     }
     return movable;
 }

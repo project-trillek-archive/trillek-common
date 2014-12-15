@@ -6,6 +6,7 @@
 #include "systems/resource-system.hpp"
 #include "systems/vcomputer-system.hpp"
 #include "event-queue.hpp"
+#include "interaction.hpp"
 #include "logging.hpp"
 
 #include "vcomputer.hpp"
@@ -18,6 +19,7 @@ namespace trillek {
 namespace hw {
 
 bool Computer::Initialize(const std::vector<Property> &properties) {
+    using namespace component;
     id_t entity_id = 0;
     std::string cputype;
     std::string romfile;
@@ -56,6 +58,13 @@ bool Computer::Initialize(const std::vector<Property> &properties) {
     if(!LoadROMFile(romfile)) {
         return false;
     }
+
+    if(!Has<Component::Interactable>(entity_id)) {
+        game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
+    }
+    auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
+    act.AddAction(Action::IA_POWER, (uint32_t)Component::VComputer);
+
     return true;
 }
 
@@ -171,7 +180,17 @@ bool VDisplay::Initialize(const std::vector<Property> &properties) {
 
     QueueLinkDevice();
 
+    if(!Has<Component::Interactable>(entity_id)) {
+        game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
+    }
+    auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
+    act.AddAction(Action::IA_POWER, (uint32_t)Component::VDisplay);
+
     return true;
+}
+
+void VKeyboard::Notify(const unsigned int entity_id, const KeyboardEvent* data) {
+
 }
 
 bool VKeyboard::Initialize(const std::vector<Property> &properties) {
@@ -209,6 +228,12 @@ bool VKeyboard::Initialize(const std::vector<Property> &properties) {
     }
 
     QueueLinkDevice();
+
+    if(!Has<Component::Interactable>(entity_id)) {
+        game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
+    }
+    auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
+    act.AddAction(Action::IA_USE);
 
     return true;
 }

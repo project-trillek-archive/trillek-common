@@ -3,7 +3,10 @@
 
 #include <memory>
 #include "components/component.hpp"
+#include "systems/dispatcher.hpp"
 #include "resources/pixel-buffer.hpp"
+#include "interaction.hpp"
+#include "os-event.hpp"
 #include "power.hpp"
 
 #include "vcomputer.hpp"
@@ -76,10 +79,12 @@ protected:
 /**
  * Class for computer displays
  */
-class VDisplay final : public VHardware, public PoweredDevice, public ComponentBase {
+class VDisplay final : public VHardware,
+        public PoweredDevice, public ComponentBase {
 public:
-    VDisplay() { }
-    VDisplay(VDisplay&& v) { }
+    VDisplay() : sid(~0) { }
+    VDisplay(VDisplay&& v) : VHardware::VHardware(std::forward<VHardware>(v)),
+        surface(std::move(v.surface)), sid(v.sid) { }
     VDisplay(const VDisplay&) = delete;
     ~VDisplay() {
     }
@@ -94,13 +99,14 @@ public:
     bool Initialize(const std::vector<Property> &properties) override;
 
     std::shared_ptr<resource::PixelBuffer> surface;
-
+    uint32_t sid;
 };
 
 /**
  * Class for keyboards
  */
-class VKeyboard final : public VHardware, public ComponentBase {
+class VKeyboard final : public VHardware, public ComponentBase,
+        public event::Subscriber<KeyboardEvent> {
 public:
     VKeyboard() : keybapi(GENERIC), VHardware::VHardware() { }
     VKeyboard(VKeyboard&& v) : VHardware::VHardware(std::forward<VHardware>(v)) {
@@ -112,6 +118,8 @@ public:
     }
 
     bool Initialize(const std::vector<Property> &properties) override;
+
+    void Notify(const unsigned int entity_id, const KeyboardEvent* data) override;
 
     enum VKeyAPI : uint32_t {
         GENERIC
