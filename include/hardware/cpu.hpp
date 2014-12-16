@@ -37,11 +37,11 @@ public:
 
     /** Turns the computer on.
      */
-    void PowerOn() override;
+    void DoPowerOn() override;
 
     /** Turns the computer off.
      */
-    void PowerOff() override;
+    void DoPowerOff() override;
 
     /** Reset the computer.
      */
@@ -82,24 +82,34 @@ protected:
 class VDisplay final : public VHardware,
         public PoweredDevice, public ComponentBase {
 public:
-    VDisplay() : sid(~0) { }
+    VDisplay() : sid(~0), mode(DISP_OFF) { }
     VDisplay(VDisplay&& v) : VHardware::VHardware(std::forward<VHardware>(v)),
-        surface(std::move(v.surface)), sid(v.sid) { }
+        surface(std::move(v.surface)), sid(v.sid), mode(v.mode) { }
     VDisplay(const VDisplay&) = delete;
     ~VDisplay() {
     }
 
-    /** Turns the display on.
-     */
-    void PowerOn() override {}
-    /** Turns the display off.
-     */
-    void PowerOff() override {}
-
     bool Initialize(const std::vector<Property> &properties) override;
+
+    void ScreenUpdate();
 
     std::shared_ptr<resource::PixelBuffer> surface;
     uint32_t sid;
+protected:
+    /** Turns the display on.
+     */
+    void DoPowerOn() override { mode = DISP_ON_CLEAR; }
+    /** Turns the display off.
+     */
+    void DoPowerOff() override { mode = DISP_TO_OFF; }
+    enum DisplayState : uint32_t {
+        DISP_OFF,
+        DISP_ON,
+        DISP_ON_CLEAR,
+        DISP_ON_NOVID,
+        DISP_TO_OFF
+    };
+    DisplayState mode;
 };
 
 /**

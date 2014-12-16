@@ -39,12 +39,8 @@ void VComputerSystem::HandleEvents(frame_tp timepoint) {
         });
     OnTrue(Bitmap<Component::VDisplay>(),
         [&](id_t entity_id) {
-            auto& disp = Get<Component::VDisplay>(entity_id);
-            computer::tda::TDAScreen screen;
-            std::static_pointer_cast<computer::tda::TDADev>(disp.device)->DumpScreen(screen);
-            computer::tda::TDAtoRGBATexture(screen, (DWord*)disp.surface->LockWrite());
-            disp.surface->UnlockWrite();
-            disp.surface->Invalidate();
+            auto& disp = system.Get<Component::VDisplay>(entity_id);
+            disp.ScreenUpdate();
         });
 }
 
@@ -61,11 +57,11 @@ void VComputerSystem::OnEvent(const InteractEvent& event) {
     switch(event.act) {
     case Action::IA_POWER:
         if(event.num == (uint32_t)Component::VDisplay && Has<Component::VDisplay>(event.entity)) {
-            game.GetSystemComponent().Get<Component::VDisplay>(event.entity).PowerOn();
+            game.GetSystemComponent().Get<Component::VDisplay>(event.entity).PowerToggle();
             return;
         }
         else if(event.num == (uint32_t)Component::VComputer && Has<Component::VComputer>(event.entity)) {
-            game.GetSystemComponent().Get<Component::VComputer>(event.entity).PowerOn();
+            game.GetSystemComponent().Get<Component::VComputer>(event.entity).PowerToggle();
             return;
         }
         break;

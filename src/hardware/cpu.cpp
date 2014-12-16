@@ -95,12 +95,12 @@ void Computer::RemoveDevice(uint32_t slot) {
     this->vc->RmDevice(slot);
 }
 
-void Computer::PowerOn() {
+void Computer::DoPowerOn() {
     if(!vc) return;
     vc->On();
 }
 
-void Computer::PowerOff() {
+void Computer::DoPowerOff() {
     if(!vc) return;
     vc->Off();
 }
@@ -187,6 +187,62 @@ bool VDisplay::Initialize(const std::vector<Property> &properties) {
     act.AddAction(Action::IA_POWER, (uint32_t)Component::VDisplay);
 
     return true;
+}
+
+void VDisplay::ScreenUpdate() {
+    using namespace component;
+    computer::tda::TDAScreen screen;
+    switch(mode) {
+    case hw::VDisplay::DISP_OFF:
+        break;
+    case hw::VDisplay::DISP_ON:
+        if( (!Has<Component::VComputer>(entity_link))
+            || (!Get<Component::VComputer>(entity_link).IsPowered()) ) {
+            mode = hw::VDisplay::DISP_ON_CLEAR;
+        }
+        std::static_pointer_cast<computer::tda::TDADev>(device)->DumpScreen(screen);
+        computer::tda::TDAtoRGBATexture(screen, (DWord*)surface->LockWrite());
+        surface->UnlockWrite();
+        surface->Invalidate();
+        break;
+    case hw::VDisplay::DISP_ON_CLEAR:
+        if( Has<Component::VComputer>(entity_link)
+            && Get<Component::VComputer>(entity_link).IsPowered() ) {
+            mode = hw::VDisplay::DISP_ON;
+        }
+        else {
+            mode = hw::VDisplay::DISP_ON_NOVID;
+        }
+        {
+            uint32_t* data = (uint32_t*)surface->LockWrite();
+            uint32_t clr = 0xFFFF0000;
+            uint32_t sz = surface->Width() * surface->Height();
+            for(uint32_t i = 0; i < sz; i++) {
+                *(data++) = clr;
+            }
+            surface->UnlockWrite();
+            surface->Invalidate();
+        }
+        break;
+    case hw::VDisplay::DISP_ON_NOVID:
+        if( Has<Component::VComputer>(entity_link)
+            && Get<Component::VComputer>(entity_link).IsPowered() ) {
+            mode = hw::VDisplay::DISP_ON;
+        }
+        break;
+    case hw::VDisplay::DISP_TO_OFF:
+        {
+            uint32_t* data = (uint32_t*)surface->LockWrite();
+            uint32_t clr = 0xFF000000;
+            uint32_t sz = surface->Width() * surface->Height();
+            for(uint32_t i = 0; i < sz; i++) {
+                *(data++) = clr;
+            }
+            surface->UnlockWrite();
+            surface->Invalidate();
+        }
+        break;
+    }
 }
 
 void VKeyboard::Notify(const unsigned int entity_id, const KeyboardEvent* data) {
