@@ -211,9 +211,6 @@ void VDisplay::ScreenUpdate() {
             mode = hw::VDisplay::DISP_ON;
         }
         else {
-            mode = hw::VDisplay::DISP_ON_NOVID;
-        }
-        {
             uint32_t* data = (uint32_t*)surface->LockWrite();
             uint32_t clr = 0xFFFF0000;
             uint32_t sz = surface->Width() * surface->Height();
@@ -222,6 +219,7 @@ void VDisplay::ScreenUpdate() {
             }
             surface->UnlockWrite();
             surface->Invalidate();
+            mode = hw::VDisplay::DISP_ON_NOVID;
         }
         break;
     case hw::VDisplay::DISP_ON_NOVID:
@@ -233,7 +231,7 @@ void VDisplay::ScreenUpdate() {
     case hw::VDisplay::DISP_TO_OFF:
         {
             uint32_t* data = (uint32_t*)surface->LockWrite();
-            uint32_t clr = 0xFF000000;
+            uint32_t clr = 0x00000000;
             uint32_t sz = surface->Width() * surface->Height();
             for(uint32_t i = 0; i < sz; i++) {
                 *(data++) = clr;

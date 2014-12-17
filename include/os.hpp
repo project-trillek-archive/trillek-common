@@ -77,6 +77,8 @@ public:
      */
     void OSMessageLoop();
 
+    void OSMessageCheck();
+
     /**
      * \brief Gets the cached window width.
      *
