@@ -16,7 +16,7 @@ struct KeyboardEvent {
 
 struct MouseBtnEvent {
     enum MOUSE_BTN_ACTION { DOWN, UP };
-    enum MOUSE_BTN { LEFT, RIGHT, MIDDLE };
+    enum MOUSE_BTN { LEFT, RIGHT, MIDDLE, EX1, EX2 };
     MOUSE_BTN_ACTION action;
     MOUSE_BTN button;
 };
@@ -27,11 +27,16 @@ struct MouseMoveEvent {
     int new_x, new_y; // Client space new x, y.
 };
 
+struct MouseScrollEvent {
+    double scroll_x, scroll_y;
+};
+
 namespace reflection {
 
-TRILLEK_MAKE_IDTYPE_NAME(KeyboardEvent, "KeyboardEvent", 5000);
-TRILLEK_MAKE_IDTYPE_NAME(MouseBtnEvent, "MousedButtonEvent", 5001);
-TRILLEK_MAKE_IDTYPE_NAME(MouseMoveEvent, "MouseMoveEvent", 5002);
+TRILLEK_MAKE_IDTYPE(KeyboardEvent, 5000);
+TRILLEK_MAKE_IDTYPE(MouseBtnEvent, 5001);
+TRILLEK_MAKE_IDTYPE(MouseMoveEvent, 5002);
+TRILLEK_MAKE_IDTYPE(MouseScrollEvent, 5003);
 
 } // namespace reflection
 } // namespace trillek

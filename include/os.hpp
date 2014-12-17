@@ -143,6 +143,14 @@ public:
     static void mouseMoveEvent(GLFWwindow* window, double x, double y);
 
     /**
+     * \brief Callback for mouse scroll events.
+     *
+     * \param[in] GLFWwindow * window
+     * \param[in] double x, y The amount scrolled.
+     */
+    static void mouseScrollEvent(GLFWwindow* window, double x, double y);
+
+    /**
      * \brief Callback for mouse button events.
      *
      * \param[in] GLFWwindow * window
@@ -214,6 +222,11 @@ private:
      * \return void
      */
     void DispatchMouseMoveEvent(const double x, const double y);
+
+    /**
+     * \brief Dispatches mouse scroll events.
+     */
+    void DispatchMouseScrollEvent(const double x, const double y);
 
     /**
      * \brief Dispatches mouse button events from the callback.
