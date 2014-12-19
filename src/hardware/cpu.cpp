@@ -112,6 +112,7 @@ void Computer::ComputerReset() {
 
 bool VHardware::LinkDevice() {
     using namespace component;
+    if(this->linked) return true;
     if(entity_link > 0 && Has<component::Component::VComputer>(entity_link)) {
         auto& vcr = game.GetSystemComponent().Get<Component::VComputer>(entity_link);
         vcr.SetDevice(this->slot, this->device);
@@ -125,8 +126,8 @@ bool VHardware::LinkDevice() {
     }
 }
 
-void VHardware::QueueLinkDevice() {
-    event::QueueEvent(HardwareAction(HardwareAction::ATTACH, entity_id));
+void VHardware::QueueLinkDevice(component::Component c) {
+    event::QueueEvent(HardwareAction(HardwareAction::ATTACH, c, entity_id));
 }
 
 bool VDisplay::Initialize(const std::vector<Property> &properties) {
@@ -178,7 +179,7 @@ bool VDisplay::Initialize(const std::vector<Property> &properties) {
     pixa->meta.push_back(Property("min-filter", std::string("linear-mip-linear")));
     this->surface = pixa;
 
-    QueueLinkDevice();
+    QueueLinkDevice(Component::VDisplay);
 
     if(!Has<Component::Interactable>(entity_id)) {
         game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
@@ -243,8 +244,46 @@ void VDisplay::ScreenUpdate() {
     }
 }
 
-void VKeyboard::Notify(const unsigned int entity_id, const KeyboardEvent* data) {
+static const uint8_t keytranslation_generic[] = {
+    0x1b, 0xd, 0x9, 0x8, 0x10, 0x5, 0x15, 0x14, 0x13, 0x12, /* 256-265 */
+    0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, /* 266-290 */
+    0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, /* 291-305 */
+    0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, /* 306-330 */
+    0,0,0,0,0, 0,0,0,0, /* 331-339 */
+    0xE, 0xF, 0x6, 0xE, 0xF, 0x6 /* 340-346 */
+};
+void VKeyGeneric::TranslateKeyDown(computer::IDevice* keyb, int scan, int mods) {
+    lastscan = scan;
+    if(scan > 255 && scan <= 346) {
+        uint8_t k = keytranslation_generic[scan - 256];
+        if(k) {
+            ((computer::gkeyboard::GKeyboardDev*)keyb)
+                ->EnforceSendKeyEvent((uint16_t)scan, k, mods & 0x7);
+        }
+    }
+}
+void VKeyGeneric::TranslateKeyUp(computer::IDevice* keyb, int scan, int mods) {
 
+}
+void VKeyGeneric::TranslateChar(computer::IDevice* keyb, int keycode, int mods) {
+    ((computer::gkeyboard::GKeyboardDev*)keyb)
+        ->EnforceSendKeyEvent((uint16_t)lastscan, (uint8_t)keycode, mods & 0x7);
+}
+
+void VKeyboard::Notify(const KeyboardEvent* data) {
+    switch (data->action) {
+    case KeyboardEvent::KEY_DOWN:
+        keybapi->TranslateKeyDown(this->device.get(), data->key, data->mods);
+        break;
+    case KeyboardEvent::KEY_CHAR:
+        keybapi->TranslateChar(this->device.get(), data->key, data->mods);
+        break;
+    case KeyboardEvent::KEY_UP:
+        keybapi->TranslateKeyUp(this->device.get(), data->key, data->mods);
+        break;
+    default:
+        break;
+    }
 }
 
 bool VKeyboard::Initialize(const std::vector<Property> &properties) {
@@ -274,22 +313,32 @@ bool VKeyboard::Initialize(const std::vector<Property> &properties) {
 
     if(modelname == "generic") {
         device.reset(new computer::gkeyboard::GKeyboardDev());
-        keybapi = GENERIC;
+        keybapi.reset(new VKeyGeneric());
     }
     else {
         LOGMSG(ERROR) << "VKeyboard: Invalid model name";
         return false;
     }
 
-    QueueLinkDevice();
+    QueueLinkDevice(Component::VKeyboard);
 
     if(!Has<Component::Interactable>(entity_id)) {
         game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
     }
     auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
-    act.AddAction(Action::IA_USE);
+    act.AddAction(Action::IA_USE, (uint32_t)Component::VKeyboard);
 
     return true;
+}
+void VKeyboard::SetActive(bool sactive) {
+    if(sactive && !active) {
+        active = true;
+        event::Dispatcher<KeyboardEvent>::GetInstance()->Subscribe(this);
+    }
+    else if(!sactive && active) {
+        active = false;
+        event::Dispatcher<KeyboardEvent>::GetInstance()->Unsubscribe(this);
+    }
 }
 
 } // namespace hw

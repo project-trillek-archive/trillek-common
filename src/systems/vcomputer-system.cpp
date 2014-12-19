@@ -45,11 +45,20 @@ void VComputerSystem::HandleEvents(frame_tp timepoint) {
 }
 
 void VComputerSystem::OnEvent(const HardwareAction& event) {
-    if(!Has<Component::VDisplay>(event.entity_id)) {
-        return;
+    switch(event.cid) {
+    case Component::VDisplay:
+        if(Has<Component::VDisplay>(event.entity_id)) {
+            auto& disp = system.Get<Component::VDisplay>(event.entity_id);
+            disp.LinkDevice();
+        }
+        break;
+    case Component::VKeyboard:
+        if(Has<Component::VKeyboard>(event.entity_id)) {
+            auto& keyb = system.Get<Component::VKeyboard>(event.entity_id);
+            keyb.LinkDevice();
+        }
+        break;
     }
-    auto& disp = system.Get<Component::VDisplay>(event.entity_id);
-    disp.LinkDevice();
 }
 
 void VComputerSystem::OnEvent(const InteractEvent& event) {
@@ -65,6 +74,18 @@ void VComputerSystem::OnEvent(const InteractEvent& event) {
             return;
         }
         break;
+    case Action::IA_USE:
+        if(event.num == (uint32_t)Component::VKeyboard && Has<Component::VKeyboard>(event.entity)) {
+            auto& cm = game.GetSystemComponent().Get<Component::VKeyboard>(event.entity);
+            if(cm.IsActive()) {
+                cm.SetActive(false);
+            }
+            else {
+                cm.SetActive(true);
+            }
+            return;
+        }
+        break;
     }
 }
 
@@ -72,6 +93,13 @@ void VComputerSystem::Notify(const KeyboardEvent* key_event) {
     switch (key_event->action) {
     case KeyboardEvent::KEY_DOWN:
         //this->gkeyb->SendKeyEvent(key_event->scancode, key_event->key, computer::gkeyboard::KEY_MODS::KEY_MOD_NONE);
+        LOGMSGC(INFO) << "KEY_DOWN " << key_event->scancode << ", " << key_event->key;
+        break;
+    case KeyboardEvent::KEY_CHAR:
+        LOGMSGC(INFO) << "KEY_CHAR " << key_event->scancode << ", " << key_event->key;
+        break;
+    case KeyboardEvent::KEY_UP:
+        LOGMSGC(INFO) << "KEY_UP " << key_event->scancode << ", " << key_event->key;
         break;
     default:
         break;

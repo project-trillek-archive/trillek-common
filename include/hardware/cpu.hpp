@@ -68,7 +68,7 @@ public:
     std::shared_ptr<computer::IDevice> device;
 
     bool LinkDevice();
-    void QueueLinkDevice();
+    void QueueLinkDevice(component::Component c);
 protected:
     id_t entity_id;
     id_t entity_link;
@@ -112,30 +112,51 @@ protected:
     DisplayState mode;
 };
 
+class VKeyAPI {
+public:
+    VKeyAPI() {}
+    virtual ~VKeyAPI() {}
+    virtual void TranslateKeyDown(computer::IDevice* keyb, int scan, int mods) = 0;
+    virtual void TranslateKeyUp(computer::IDevice* keyb, int scan, int mods) = 0;
+    virtual void TranslateChar(computer::IDevice* keyb, int keycode, int mods) = 0;
+};
+
+class VKeyGeneric final : public VKeyAPI {
+public:
+    VKeyGeneric() { lastscan = 0; }
+    ~VKeyGeneric() {}
+    void TranslateKeyDown(computer::IDevice* keyb, int scan, int mods);
+    void TranslateKeyUp(computer::IDevice* keyb, int scan, int mods);
+    void TranslateChar(computer::IDevice* keyb, int keycode, int mods);
+
+    int lastscan;
+};
+
 /**
  * Class for keyboards
  */
 class VKeyboard final : public VHardware, public ComponentBase,
         public event::Subscriber<KeyboardEvent> {
 public:
-    VKeyboard() : keybapi(GENERIC), VHardware::VHardware() { }
-    VKeyboard(VKeyboard&& v) : VHardware::VHardware(std::forward<VHardware>(v)) {
+    VKeyboard() : keybapi(), VHardware::VHardware(), active(false) { }
+    VKeyboard(VKeyboard&& v) : keybapi(std::move(v.keybapi)),
+            VHardware::VHardware(std::forward<VHardware>(v)) {
         this->component_type_id = v.component_type_id; // ComponentBase
-        keybapi = v.keybapi;
+        active = v.active;
     }
     VKeyboard(const VKeyboard&) = delete;
     ~VKeyboard() {
     }
 
     bool Initialize(const std::vector<Property> &properties) override;
+    void SetActive(bool active);
+    bool IsActive() const { return active; }
 
-    void Notify(const unsigned int entity_id, const KeyboardEvent* data) override;
+    void Notify(const KeyboardEvent* data) override;
 
-    enum VKeyAPI : uint32_t {
-        GENERIC
-    };
 private:
-    VKeyAPI keybapi;
+    std::unique_ptr<VKeyAPI> keybapi;
+    bool active;
 };
 
 } // namespace hw

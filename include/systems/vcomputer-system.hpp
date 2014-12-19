@@ -19,8 +19,10 @@ struct HardwareAction {
         ATTACH,
         REMOVE,
     };
-    HardwareAction(ActionType a, id_t e) : act(a), entity_id(e) { }
+    HardwareAction(ActionType a, component::Component c, id_t e) :
+        act(a), cid(c), entity_id(e) { }
     ActionType act;
+    component::Component cid;
     id_t entity_id;
 };
 
