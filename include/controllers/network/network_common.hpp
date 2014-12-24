@@ -29,15 +29,6 @@ namespace trillek { namespace network {
 		char sa_data[48];
 	};
 
-	/* send data to a native socket */
-	int send(socket_t handle, const char *, int);
-	/* receive data from a native socket */
-	int recv(socket_t handle, char *, int);
-	/* close a native socket handle */
-	void close(socket_t &handle);
-
-    void set_nonblocking(socket_t handle, bool enable);
-
 	typedef struct NetworkAddress {
 	public:
 		struct net_sockaddr addr;
@@ -58,12 +49,23 @@ namespace trillek { namespace network {
 		void ip4(const std::string &, unsigned short p);
 		void ip4(unsigned char i1, unsigned char i2, unsigned char i3, unsigned char i4);
 		void ip4(unsigned long i);
+		unsigned long ip4() const;
 
 		void ip6(const std::string &);
 		void ip6(const std::string &, unsigned short p);
 		std::string to_string() const;
 		int length() const;
 	} address;
+
+	/* send data to a native socket */
+	int send(socket_t handle, const char *, int);
+	/* receive data from a native socket */
+	int recv(socket_t handle, char *, int);
+    int recv_from(socket_t handle, NetworkAddress & r, char * b, size_t l);
+	/* close a native socket handle */
+	void close(socket_t &handle);
+
+    void set_nonblocking(socket_t handle, bool enable);
 
 } // network
 } // trillek

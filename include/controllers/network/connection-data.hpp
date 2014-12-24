@@ -2,9 +2,13 @@
 #define CONNECTIONDATA_H_INCLUDED
 
 #include <atomic>
-#include "controllers/network/TCPConnection.hpp"
+#include <vector>
+#include <mutex>
+#include "controllers/network/authentication-handler.hpp"
 
 namespace trillek { namespace network {
+
+class NetworkNodeData;
 
 /** \brief This object is attached to each socket
  */
@@ -16,30 +20,25 @@ public:
      * \param connection the connection instance
      *
      */
-    ConnectionData(const unsigned char state, TCPConnection&& connection) :
+    ConnectionData(const unsigned char state, std::shared_ptr<NetworkNodeData> node_data) :
         _auth_state(state),
-        _connection(std::move(connection)),
-        _id(0) {};
+        _node_data(node_data) {}
 
     /** \brief Constructor
      *
      * Note that the connection is considered authenticated
      *
      * \param id const id_t the id of the entity
-     * \param hasher the hasher functor to send packets
      * \param verifier the verifier functor to check packet received
      *
      */
-    ConnectionData(const id_t id,
-        std::function<void(unsigned char*,const unsigned char*,size_t)>&& hasher,
-        std::function<bool(const unsigned char*,const unsigned char*,size_t)>&& verifier)
-            : _auth_state(AUTH_SHARE_KEY), _id(id), _hasher(std::move(hasher)), _verifier(std::move(verifier)) {};
+    ConnectionData(std::shared_ptr<NetworkNodeData> node_data)
+            : _auth_state(AUTH_SHARE_KEY), _node_data(node_data) {}
 
-    ~ConnectionData() {};
+    ~ConnectionData() {}
 
-    // Copy functions are deleted
-    ConnectionData(ConnectionData&) = delete;
-    ConnectionData& operator=(ConnectionData&) = delete;
+    ConnectionData(const ConnectionData& that)
+        : _auth_state(that._auth_state.load()), _node_data(that._node_data) {}
 
     /** \brief Compare atomically the current state of the connection
      *
@@ -87,66 +86,31 @@ public:
      * \return bool true if the lock is acquired, false otherwise
      *
      */
-    bool TryLockConnection() const { return _cx_mutex.try_lock(); };
+    bool TryLockConnection() const { return _cx_mutex.try_lock(); }
 
     /** \brief Release the mutex associated with this connection
      *
      */
-    void ReleaseConnection() const { _cx_mutex.unlock(); };
-
-    /** \brief Return the hasher associated to this socket
-     *
-     * \return const std::function<void(unsigned char*,const unsigned char*,size_t)>* const
-     *
-     */
-    const std::function<void(unsigned char*,const unsigned char*,size_t)>& Hasher() const {
-        return _hasher;
-    };
-
-    /** \brief Return the verifier associated to this socket
-     *
-     * \return const std::function<bool(const unsigned char*,const unsigned char*,size_t)>* const
-     *
-     */
-    const std::function<bool(const unsigned char*,const unsigned char*,size_t)>& Verifier() const {
-        return _verifier;
-    };
-
-    /** \brief Return the id of the entity to which this socket is attached
-     *
-     * \return id_t the id
-     *
-     */
-    id_t Id() const { return _id; };
-
+    void ReleaseConnection() const { _cx_mutex.unlock(); }
 
     /** \brief Get the instance of TCPConnection
      *
      * \return TCPConnection the connexion
      *
      */
-
-    TCPConnection ConnectionAccept() const {
+    bool ConnectionAccept() const {
         unsigned char key_exchange_state = AUTH_KEY_EXCHANGE;
         unsigned char share_key_state = AUTH_SHARE_KEY;
-        if (std::atomic_compare_exchange_strong(&_auth_state, &key_exchange_state, share_key_state)) {
-            // single thread
-            return std::move(_connection);
-        }
-        return TCPConnection();
-    };
+        return (std::atomic_compare_exchange_strong(&_auth_state, &key_exchange_state, share_key_state));
+    }
 
-    TCPConnection& GetTCPConnection() const { return _connection; };
-
+    std::shared_ptr<NetworkNodeData> GetNodeData() const { return _node_data; }
 
 private:
     // connection write is protected by _auth_state single-threaded transition. no read
-    mutable TCPConnection _connection;
     mutable std::atomic<unsigned char> _auth_state;
+    std::shared_ptr<NetworkNodeData> _node_data;
     static const std::vector<unsigned char> _states;
-    const id_t _id;
-    const std::function<void(unsigned char*,const unsigned char*,size_t)> _hasher;
-    const std::function<bool(const unsigned char*,const unsigned char*,size_t)> _verifier;
     // guards the access to the socket
     mutable std::mutex _cx_mutex;
 };

@@ -69,6 +69,27 @@ int recv(socket_t handle, char * buf, int buflen) {
     return i;
 }
 
+int recv_from(socket_t handle, NetworkAddress & r, char * b, size_t l) {
+    if(!handle) { return -1; }
+    socklen_t x = r.length();
+    int i = recvfrom(handle, b, l, 0, (struct sockaddr*)&r.addr, &x);
+    if(i < 0) {
+#ifdef WIN32
+        if(WSAGetLastError() == WSAEWOULDBLOCK) {
+#else
+        if(errno == EAGAIN || errno == EWOULDBLOCK) {
+#endif
+            return 0;
+        }
+#ifdef WIN32
+        if(WSAGetLastError() == WSAEMSGSIZE) {
+            return l;
+        }
+#endif
+    }
+    return i;
+}
+
 NetworkAddress::NetworkAddress() {
     addr.sa_family = 0;
     af = NETA_UNDEF;
@@ -270,6 +291,19 @@ void NetworkAddress::ip4(unsigned long i)
     ((struct sockaddr_in*)&addr)->sin_addr.s_addr = htonl(i);
 #endif
 }
+
+unsigned long NetworkAddress::ip4() const
+{
+    if (addr.sa_family != AF_INET || af != NETA_IPv4) {
+        return 0;
+    }
+#ifdef WIN32
+    return ntohl(((struct sockaddr_in*)&addr)->sin_addr.S_un.S_addr);
+#else
+    return ntohl(((struct sockaddr_in*)&addr)->sin_addr.s_addr);
+#endif
+}
+
 void NetworkAddress::ip6(const std::string &txtd, unsigned short p)
 {
     addr.sa_family = AF_INET6;

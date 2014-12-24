@@ -19,24 +19,26 @@ bool VMAC_StreamHasher::Verify(const byte* digest, const byte* message, size_t l
     std::vector<byte> nonce(_nonce_size);
     std::lock_guard<std::mutex> locker(vmac_mutex);
     ++_nonce;
-    /* Integer vmac, nonc, k, m;
+/*     Integer vmac, nonc, k, m;
     vmac.Decode(digest, 8);
     nonc.Decode(nonce.data(), _nonce_size);
     k.Decode(_key->data(), 16);
     m.Decode(message, len);
     std::cout << ">>Verify VMAC" << std::endl;
-    std::cout << "VMAC is " << std::hex << vmac << std::endl;
-    std::cout << "nonce is " << std::hex << nonc << std::endl;
-    std::cout << "key is " << std::hex << k << std::endl;
-    std::cout << "message is " << std::hex << m << std::endl;
-    */
+    std::cout << "   VMAC is " << std::hex << vmac << std::endl;
+    std::cout << "   nonce is " << _nonce << std::endl;
+    std::cout << "   key is " << std::hex << k << std::endl;
+    std::cout << "   message is " << std::hex << m << std::endl;
+*/
     _nonce.Encode(nonce.data(), _nonce_size);
     _hasher.Resynchronize(nonce.data(), _nonce_size);
     if (_hasher.VerifyDigest(digest, message, len)) {
+//        std::cout << ">>VMAC OK" << std::endl;
         return true;
     }
     // if check failed, reset the counter to previous state
     --_nonce;
+//    std::cout << ">>VMAC FAILED" << std::endl;
     return false;
 }
 

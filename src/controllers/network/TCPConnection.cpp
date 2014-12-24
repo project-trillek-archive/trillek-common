@@ -135,6 +135,7 @@ namespace trillek { namespace network {
 		socket_t h;
 		socklen_t sas = sizeof(sockaddr);
 		address radd;
+		radd.af = this->laddr.af;
 		h = ::accept(this->handle, (struct sockaddr*)&radd.addr, &sas);
 		if(h == INVALID_SOCKET) {
 			return rv;

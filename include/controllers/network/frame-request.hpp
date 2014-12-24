@@ -3,18 +3,12 @@
 
 #include <chrono>
 #include "trillek.hpp"
-#include "controllers/network/authentication-handler.hpp"
-#include "controllers/network/connection-data.hpp"
+#include "controllers/network/message.hpp"
 
 //TODO: Remove Visual Studio specific code
 // when a decent std::chrono implementation will be available
 
-#if defined(_MSC_VER)
-//3 seconds in nanoseconds
-#define TIMEOUT 3000000000
-#else
-#define TIMEOUT 3
-#endif
+const std::chrono::seconds TIMEOUT(3);
 
 namespace trillek { namespace network {
 
@@ -30,7 +24,7 @@ public:
      * cxdata_ptr const ConnectionData* const a pointer on an object storing
      * some data on the connection
      */
-    Frame_req(const int fd, size_t length_total, const ConnectionData* const cxdata_ptr);
+    Frame_req(const int fd, size_t length_total, const ConnectionData* const cxdata_ptr, std::shared_ptr<Message> message);
 
     // delete copy constructor and assignment for zero-copy guarantee
     Frame_req(Frame_req&) = delete;

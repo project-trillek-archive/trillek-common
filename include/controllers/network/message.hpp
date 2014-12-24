@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstring>
 #include "controllers/network/packet-handler.hpp"
+#include "controllers/network/network_common.hpp"
 #include "trillek.hpp"
 
 // size of the VMAc tag
@@ -36,11 +37,17 @@
 #define CPU_MSG			12		// for CPU...
 // Feel free to add or modify this list
 
+// Minor codes
+// TEST_MSG
+#define TEST_MSG_TCP 0
+#define TEST_MSG_UDP 1
+
 #define IS_RESTRICTED(x)	((x >> 3) != 0)
 
 namespace trillek { namespace network {
 
 class ConnectionData;
+class NetworkNodeData;
 
 /** \brief The header of the message, without the preceding length
  */
@@ -84,11 +91,13 @@ public:
      * data about the connection
      *
      */
-    template<class U=Frame>
-    Message(const int fd = -1, const ConnectionData* const cx_data = nullptr) :
-            cx_data(cx_data),
-            fd(fd), packet_size(sizeof(U)),
-            data(std::vector<char>(sizeof(U) + sizeof(msg_tail))) {};
+//    template<class U=Frame>
+    Message(const ConnectionData* cnxd = nullptr, const int fd = -1);
+
+    Message(uint32_t size) :
+            fd(-1), packet_size(size) {
+                data.resize(size);
+            };
 
     virtual ~Message() {};
 
@@ -100,7 +109,7 @@ public:
     Message(Message&& m) :
         data(std::move(m.data)),
         packet_size (std::move(m.packet_size)),
-        cx_data (std::move(m.cx_data)),
+        node_data (std::move(m.node_data)),
         fd(std::move(m.fd)) {};
 
     template<class U>
@@ -108,6 +117,15 @@ public:
         append(&in, sizeof(U));
         return *this;
     }
+
+    /** \brief Send a message to a client using UDP
+     *
+     * \param id id_t the id of the entity to which the message must be sent
+     * \param major unsigned char the major code of the message
+     * \param minor unsigned char the minor code of the message
+     *
+     */
+    void SendUDP(id_t id, unsigned char major, unsigned char minor);
 
     /** \brief Send a message to a client using TCP
      *
@@ -125,6 +143,14 @@ public:
      *
      */
     void SendTCP(unsigned char major, unsigned char minor);
+
+    /** \brief Send a message to a server using UDP
+     *
+     * \param major unsigned char the major code of the message
+     * \param minor unsigned char the minor code of the message
+     *
+     */
+    void SendUDP(unsigned char major, unsigned char minor);
 
     /** \brief Resize the internal buffer.
      *
@@ -190,7 +216,7 @@ public:
      */
     Frame_hdr* FrameHeader() {
         return reinterpret_cast<Frame_hdr*>(data.data());
-    };
+    }
 
     /** \brief Remove the VMAC tag
      *
@@ -199,21 +225,29 @@ public:
     void RemoveTailClient() { packet_size -= sizeof(msg_tail); };
     char* Body() {
         return (data.data() + sizeof(msg_hdr) + sizeof(Frame_hdr));
-    };
+    }
 
     uint32_t BodySize() {
         return (Tail<unsigned char*>() - reinterpret_cast<unsigned char*>(Body()));
-    };
+    }
 
     template<class T>
     T Tail() {
         return reinterpret_cast<T>(data.data() + packet_size);
-    };
+    }
 
-    const ConnectionData* CxData() const { return cx_data; };
-    int FileDescriptor() const { return fd; };
+    void SetNodeData(std::shared_ptr<NetworkNodeData> nodedata) { this->node_data = std::move(nodedata); }
+
+    const std::shared_ptr<NetworkNodeData> NodeData() const { return node_data; }
+    int FileDescriptor() const { return fd; }
 
     void Send(int fd, unsigned char major, unsigned char minor,
+        const std::function<void(unsigned char*,const unsigned char*,size_t)>& hasher,
+        unsigned char* tagptr,
+        unsigned int tag_size,
+        unsigned int tail_size);
+
+    void Send(const NetworkAddress& address, unsigned char major, unsigned char minor,
         const std::function<void(unsigned char*,const unsigned char*,size_t)>& hasher,
         unsigned char* tagptr,
         unsigned int tag_size,
@@ -242,7 +276,7 @@ public:
 
     std::vector<char> data;
     uint32_t packet_size;
-    const ConnectionData* const cx_data;
+    std::shared_ptr<NetworkNodeData> node_data;
     const int fd;
 };
 
