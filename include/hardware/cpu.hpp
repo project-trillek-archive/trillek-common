@@ -77,6 +77,17 @@ protected:
 };
 
 /**
+ * Class for abstracted display client backends
+ */
+class VDisplayAPI {
+public:
+    VDisplayAPI() {}
+    virtual ~VDisplayAPI() {}
+    virtual void ResetState() = 0;
+    virtual void ScreenUpdate(computer::IDevice*, resource::PixelBuffer*) = 0;
+};
+
+/**
  * Class for computer displays
  */
 class VDisplay final : public VHardware,
@@ -94,6 +105,7 @@ public:
     void ScreenUpdate();
 
     std::shared_ptr<resource::PixelBuffer> surface;
+    std::unique_ptr<VDisplayAPI> devapi;
     uint32_t sid;
 protected:
     /** Turns the display on.

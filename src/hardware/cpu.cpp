@@ -130,6 +130,27 @@ void VHardware::QueueLinkDevice(component::Component c) {
     event::QueueEvent(HardwareAction(HardwareAction::ATTACH, c, entity_id));
 }
 
+class VDisplayAPI_TDA final : public VDisplayAPI {
+public:
+    VDisplayAPI_TDA() : framecount(0) {}
+    ~VDisplayAPI_TDA() {}
+
+    void ResetState() override {
+        this->framecount = 0;
+        std::memset(&screen, 0, sizeof(computer::tda::TDAScreen));
+    }
+
+    void ScreenUpdate(computer::IDevice* dev, resource::PixelBuffer* surface) override {
+        ((computer::tda::TDADev*)dev)->DumpScreen(screen);
+        computer::tda::TDAtoRGBATexture(screen, (DWord*)surface->LockWrite(), this->framecount);
+        surface->UnlockWrite();
+        surface->Invalidate();
+    }
+
+    unsigned framecount;
+    computer::tda::TDAScreen screen;
+};
+
 bool VDisplay::Initialize(const std::vector<Property> &properties) {
     using namespace component;
     uint32_t instid = 0;
@@ -161,6 +182,7 @@ bool VDisplay::Initialize(const std::vector<Property> &properties) {
     }
     if(modelname == "TDA") {
         device.reset(new computer::tda::TDADev());
+        devapi.reset(new VDisplayAPI_TDA());
     }
     else {
         LOGMSG(ERROR) << "VDisplay: Invalid model name";
@@ -179,6 +201,7 @@ bool VDisplay::Initialize(const std::vector<Property> &properties) {
     pixa->meta.push_back(Property("min-filter", std::string("linear-mip-linear")));
     this->surface = pixa;
 
+    devapi->ResetState();
     QueueLinkDevice(Component::VDisplay);
 
     if(!Has<Component::Interactable>(entity_id)) {
@@ -192,19 +215,17 @@ bool VDisplay::Initialize(const std::vector<Property> &properties) {
 
 void VDisplay::ScreenUpdate() {
     using namespace component;
-    computer::tda::TDAScreen screen;
+
     switch(mode) {
     case hw::VDisplay::DISP_OFF:
         break;
     case hw::VDisplay::DISP_ON:
         if( (!Has<Component::VComputer>(entity_link))
-            || (!Get<Component::VComputer>(entity_link).IsPowered()) ) {
+            || (!Get<Component::VComputer>(entity_link).IsPowered())
+            || (!devapi)) {
             mode = hw::VDisplay::DISP_ON_CLEAR;
         }
-        std::static_pointer_cast<computer::tda::TDADev>(device)->DumpScreen(screen);
-        computer::tda::TDAtoRGBATexture(screen, (DWord*)surface->LockWrite());
-        surface->UnlockWrite();
-        surface->Invalidate();
+        devapi->ScreenUpdate(device.get(), surface.get());
         break;
     case hw::VDisplay::DISP_ON_CLEAR:
         if( Has<Component::VComputer>(entity_link)
@@ -220,6 +241,9 @@ void VDisplay::ScreenUpdate() {
             }
             surface->UnlockWrite();
             surface->Invalidate();
+            if(devapi) {
+                devapi->ResetState();
+            }
             mode = hw::VDisplay::DISP_ON_NOVID;
         }
         break;
