@@ -8,20 +8,18 @@
 using namespace CryptoPP;
 
 namespace trillek { namespace network { namespace cryptography {
-VMAC_StreamHasher::VMAC_StreamHasher(buffer&& key, const byte* nonce, size_t nonce_size)
-    : _key(std::move(key)), _key_ptr(_key->data()), _key_size(_key->size()),
-     _nonce_size(nonce_size), _nonce(nonce, nonce_size) {
-    _hasher.SetKey(_key_ptr, _key_size,
-        MakeParameters(Name::IV(), ConstByteArrayParameter(nonce, _nonce_size, false), false));
+VMAC_StreamHasher::VMAC_StreamHasher(buffer&& key, const byte* nonce)
+    : _key(std::move(key)), _nonce(nonce, 8) {
+    _hasher.SetKey(_key->data(), _key->size(),
+        MakeParameters(Name::IV(), ConstByteArrayParameter(nonce, 8, false), false));
 };
 
-bool VMAC_StreamHasher::Verify(const byte* digest, const byte* message, size_t len) const {
-    std::vector<byte> nonce(_nonce_size);
-    std::lock_guard<std::mutex> locker(vmac_mutex);
+bool VMAC_StreamHasher::Verify(const byte* digest, const byte* message, size_t len) {
+    byte nonce[8];
     ++_nonce;
 /*     Integer vmac, nonc, k, m;
     vmac.Decode(digest, 8);
-    nonc.Decode(nonce.data(), _nonce_size);
+    nonc.Decode(nonce, 8);
     k.Decode(_key->data(), 16);
     m.Decode(message, len);
     std::cout << ">>Verify VMAC" << std::endl;
@@ -30,8 +28,8 @@ bool VMAC_StreamHasher::Verify(const byte* digest, const byte* message, size_t l
     std::cout << "   key is " << std::hex << k << std::endl;
     std::cout << "   message is " << std::hex << m << std::endl;
 */
-    _nonce.Encode(nonce.data(), _nonce_size);
-    _hasher.Resynchronize(nonce.data(), _nonce_size);
+    _nonce.Encode(nonce, 8);
+    _hasher.Resynchronize(nonce, 8);
     if (_hasher.VerifyDigest(digest, message, len)) {
 //        std::cout << ">>VMAC OK" << std::endl;
         return true;
@@ -42,16 +40,15 @@ bool VMAC_StreamHasher::Verify(const byte* digest, const byte* message, size_t l
     return false;
 }
 
-void VMAC_StreamHasher::CalculateDigest(byte* digest, const byte* message, size_t len) const {
-    std::vector<byte> nonce(_nonce_size);
-    std::lock_guard<std::mutex> locker(vmac_mutex);
+void VMAC_StreamHasher::CalculateDigest(byte* digest, const byte* message, size_t len) {
+    byte nonce[8];
     ++_nonce;
-    _nonce.Encode(nonce.data(), _nonce_size);
-    _hasher.Resynchronize(nonce.data(), _nonce_size);
+    _nonce.Encode(nonce, 8);
+    _hasher.Resynchronize(nonce, 8);
     _hasher.CalculateDigest(digest, message, len);
     /* Integer vmac, nonc, k, m;
     vmac.Decode(digest, 8);
-    nonc.Decode(nonce.data(), _nonce_size);
+    nonc.Decode(nonce, 8);
     k.Decode(_key->data(), 16);
     m.Decode(message, len);
     std::cout << ">>Compute VMAC" << std::endl;

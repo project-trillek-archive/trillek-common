@@ -28,8 +28,8 @@ public:
      * \param nonce_size size_t the nonce size (in bytes)
      *
      */
-    VMAC_StreamHasher(buffer&& key, const byte* nonce, size_t nonce_size);
-    VMAC_StreamHasher() : _nonce_size{}, _key_ptr{}, _key_size{} {};
+    VMAC_StreamHasher(buffer&& key, const byte* nonce);
+    VMAC_StreamHasher() {};
     ~VMAC_StreamHasher() {};
 
     VMAC_StreamHasher(VMAC_StreamHasher&) = delete;
@@ -40,7 +40,7 @@ public:
      * \return The function to hash a message
      *
      */
-    std::function<void(unsigned char*,const unsigned char*,size_t)> Hasher() const {
+    std::function<void(unsigned char*,const unsigned char*,size_t)> Hasher() {
         return std::bind(&cryptography::VMAC_StreamHasher::CalculateDigest, this->shared_from_this(), _1, _2, _3);
     }
 
@@ -49,7 +49,7 @@ public:
      * \return The function to verify a message
      *
      */
-    std::function<bool(const unsigned char*,const unsigned char*,size_t)> Verifier() const {
+    std::function<bool(const unsigned char*,const unsigned char*,size_t)> Verifier() {
         return std::bind(&cryptography::VMAC_StreamHasher::Verify, this->shared_from_this(), _1, _2, _3);
     }
 
@@ -65,7 +65,7 @@ private:
      * \return bool true if the verification is positive, false otherwise
      *
      */
-    bool Verify(const byte* digest, const byte* message, size_t len) const ;
+    bool Verify(const byte* digest, const byte* message, size_t len);
 
     /** \brief Compute a digest of 8 bytes
      *
@@ -76,15 +76,11 @@ private:
      * \param len int the length of the message (in bytes)
      *
      */
-    void CalculateDigest(byte* digest, const byte* message, size_t len) const;
+    void CalculateDigest(byte* digest, const byte* message, size_t len);
 
-    mutable CryptoPP::Integer _nonce;
-    const size_t _nonce_size;
+    CryptoPP::Integer _nonce;
     const buffer _key;
-    const byte* const _key_ptr;
-    const size_t _key_size;
-    mutable CryptoPP::VMAC<CryptoPP::AES,64> _hasher;
-    mutable std::mutex vmac_mutex;
+    CryptoPP::VMAC<CryptoPP::AES,64> _hasher;
 };
 } // cryptography
 } // network
