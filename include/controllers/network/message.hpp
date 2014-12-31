@@ -95,7 +95,7 @@ public:
      *
      */
     Message(const std::shared_ptr<std::vector<char,TrillekAllocator<char>>>& buffer,
-                size_t index = 0, size_t size = 0, const ConnectionData* cnxd = nullptr, const int fd = -1);
+                 size_t index = 0, size_t size = 0, const ConnectionData* cnxd = nullptr, int fd = -1);
 
     virtual ~Message() {}
 
@@ -108,8 +108,7 @@ public:
         data(std::move(m.data)),
         data_size(std::move(m.data_size)),
         index (std::move(m.index)),
-        node_data (std::move(m.node_data)),
-        fd(std::move(m.fd)) {};
+        node_data (std::move(m.node_data)) {};
 
     template<class U>
     Message& operator<<(const U& in) {
@@ -365,13 +364,6 @@ private:
      */
     const std::shared_ptr<NetworkNodeData> NodeData() const { return node_data; }
 
-    /** \brief File Descriptor getter
-     *
-     * \return the file descriptor
-     *
-     */
-    int FileDescriptor() const { return fd; }
-
     // The pointer on the buffer
     std::shared_ptr<char> data;
     // the number of bytes allocated
@@ -380,7 +372,6 @@ private:
     size_t index;
     // an instance of NodeData used during message distribution
     std::shared_ptr<NetworkNodeData> node_data;
-    const int fd;
 };
 
 // Declare specialized template functions.

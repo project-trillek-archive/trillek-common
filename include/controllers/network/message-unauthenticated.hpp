@@ -8,12 +8,20 @@ namespace trillek { namespace network {
 class MessageUnauthenticated : public Message {
 public:
     MessageUnauthenticated(const std::shared_ptr<std::vector<char,TrillekAllocator<char>>>& buffer,
-                size_t index, size_t size, const ConnectionData* cnxd, const int fd)
-        : Message(buffer, index, size, cnxd, fd), cx_data(cnxd) {}
+                size_t index = 0, size_t size = 0, const ConnectionData* cnxd = nullptr, int fd = -1)
+        : Message(buffer, index, size, cnxd), cx_data(cnxd), fd(fd) {}
+
+    /** \brief File Descriptor getter
+     *
+     * \return the file descriptor
+     *
+     */
+    int FileDescriptor() const { return fd; }
 
     const ConnectionData* CxData() { return cx_data; }
 private:
     const ConnectionData* const cx_data;
+    const int fd;
 };
 
 } // network
