@@ -5,9 +5,11 @@
 #include <memory>
 #include <vector>
 #include <cstring>
+#include <assert.h>
 #include "controllers/network/packet-handler.hpp"
 #include "controllers/network/network_common.hpp"
 #include "trillek.hpp"
+#include "logging.hpp"
 
 // size of the VMAc tag
 #define VMAC_SIZE			8
@@ -16,7 +18,7 @@
 // size of the counter
 #define COUNTER_SIZE        4
 
-// WARNING : We are little endian even on network !!!
+// TODO : Convert integers to Big Endian before sending them to the network
 
 // Version MAJOR codes
 // unauthenticated messages: everyone can send them
@@ -79,27 +81,23 @@ struct Frame {
 class Message {
 public:
     friend class Authentication;
-    //template<int Major,int Minor, TagType T> friend void packet_handler::PacketHandler::Process() const;
     friend class NetworkController;
     friend class Frame_req;
+    friend void packet_handler::PacketHandler::Process<NET_MSG,5>() const;
 
     /** \brief Constructor
      *
-     * \param T the type of packet to construct
-     * \param fd int the file descriptor of the socket (optional)
-     * \param cxdata_ptr const ConnectionData* const the object storing
-     * data about the connection
+     * \param buffer the buffer where to put the data
+     * \param index the index in the buffer where to start to write data
+     * \param size the number of bytes allocated in the buffer for this message
+     * \param cnxd (internal) an object used by the network
+     * \param fd (internal) the file descriptor
      *
      */
-//    template<class U=Frame>
-    Message(const ConnectionData* cnxd = nullptr, const int fd = -1);
+    Message(const std::shared_ptr<std::vector<char,TrillekAllocator<char>>>& buffer,
+                size_t index = 0, size_t size = 0, const ConnectionData* cnxd = nullptr, const int fd = -1);
 
-    Message(uint32_t size) :
-            fd(-1), packet_size(size) {
-                data.resize(size);
-            };
-
-    virtual ~Message() {};
+    virtual ~Message() {}
 
     // Copy constructor and assignment are deleted to remain zero-copy
     Message(Message&) = delete;
@@ -108,7 +106,8 @@ public:
     // Move constructor
     Message(Message&& m) :
         data(std::move(m.data)),
-        packet_size (std::move(m.packet_size)),
+        data_size(std::move(m.data_size)),
+        index (std::move(m.index)),
         node_data (std::move(m.node_data)),
         fd(std::move(m.fd)) {};
 
@@ -152,46 +151,20 @@ public:
      */
     void SendUDP(unsigned char major, unsigned char minor);
 
-    /** \brief Resize the internal buffer.
-     *
-     * \param new_size size_t the new size
-     *
-     */
-    void Resize(size_t new_size);
-
-    /** \brief Resize the internal buffer.
-     *
-     * For the case where there is no tag
-     *
-     *
-     * \param new_size size_t the new size
-     *
-     */
-    void ResizeNoTag(size_t new_size);
-
     /** \brief Maps the body of the message to the structure of
      * the packet of type T
      *
-     * The internal buffer is dynamically resized.
+     * The index is updated to point to the byte after T. There is no dynamic
+     * allocation of buffer
      *
      * \return U* pointer to the packet T
      *
      */
     template<class V, class U=V>
     U* Content() {
-        if(packet_size < sizeof(V) + sizeof(Frame)) {
-            Resize(sizeof(V));
-        }
+        Resize(sizeof(V));
         return reinterpret_cast<U*>(Body());
     }
-
-    /** \brief Return the size of the frame including header,
-     * but without VMAC tag
-     *
-     * \return uint32_t the size
-     *
-     */
-    uint32_t PacketSize() const { return packet_size; };
 
     /** \brief Return the entity id attached to this message
      *
@@ -200,14 +173,69 @@ public:
      */
     id_t GetId() const;
 
+private:
+    /** \brief Send data to the network using a socket
+     *
+     * \param fd the socket to use
+     * \param major the major code
+     * \param minor the minor code
+     * \param the cryptotag generator
+     * \param tagptr pointer on the tag
+     * \param tag_size size of the cryptotag
+     *
+     */
+    void Send(int fd, unsigned char major, unsigned char minor,
+        const std::function<void(unsigned char*,const unsigned char*,size_t)>& hasher,
+        unsigned char* tagptr,
+        unsigned int tag_size);
+
+    /** \brief Send data to the network using a network address
+     *
+     * \param address the address to use
+     * \param major the major code
+     * \param minor the minor code
+     * \param the cryptotag generator
+     * \param tagptr pointer on the tag
+     * \param tag_size size of the cryptotag
+     *
+     */
+    void Send(const NetworkAddress& address, unsigned char major, unsigned char minor,
+        const std::function<void(unsigned char*,const unsigned char*,size_t)>& hasher,
+        unsigned char* tagptr,
+        unsigned int tag_size);
+
+    /** \brief Send data to the network using a socket
+     *
+     * The packet is not authentified.
+     *
+     * \param fd the socket to use
+     * \param major the major code
+     * \param minor the minor code
+     *
+     */
+    void SendMessageNoVMAC(int fd, uint8_t major, uint8_t minor) {
+        if(fd < 0) {
+            return;
+        }
+        auto header = Header();
+        header->type_major = major;
+        header->type_minor = minor;
+        FrameHeader()->length = index - sizeof(Frame_hdr);
+
+        if (send(fd, reinterpret_cast<char*>(FrameHeader()), index) <= 0) {
+            LOGMSG(ERROR) << "could not send frame with no tag to fd = " << fd ;
+        }
+
+    }
+
     /** \brief Return a pointer on the header of the message
      *
      * \return msg_hdr* the pointer on msg_hdr
      *
      */
     msg_hdr* Header() {
-        return reinterpret_cast<msg_hdr*>(data.data() + sizeof(Frame_hdr));
-    };
+        return reinterpret_cast<msg_hdr*>(data.get() + sizeof(Frame_hdr));
+    }
 
     /** \brief Return a pointer on the frame, beginning at the length field
      *
@@ -215,47 +243,77 @@ public:
      *
      */
     Frame_hdr* FrameHeader() {
-        return reinterpret_cast<Frame_hdr*>(data.data());
+        return reinterpret_cast<Frame_hdr*>(data.get());
     }
 
-    /** \brief Remove the VMAC tag
+    /** \brief Update the index to remove the VMAC tag
      *
      */
-    void RemoveVMACTag() { packet_size -= VMAC_SIZE; };
-    void RemoveTailClient() { packet_size -= sizeof(msg_tail); };
+    void RemoveVMACTag() { index -= VMAC_SIZE; };
+
+
+    /** \brief Update the index to remove the tail of the message (client only)
+     *
+     */
+    void RemoveTailClient() { index -= sizeof(msg_tail); };
+
+    /** \brief Return a pointer on the body, i.e the data after the header
+     *
+     * \return char* the pointer
+     *
+     */
     char* Body() {
-        return (data.data() + sizeof(msg_hdr) + sizeof(Frame_hdr));
+        return (data.get() + sizeof(Frame));
     }
 
-    uint32_t BodySize() {
+    /** \brief Return the size of the body of the message
+     *
+     * \return size_t the size
+     *
+     */
+    size_t BodySize() {
         return (Tail<unsigned char*>() - reinterpret_cast<unsigned char*>(Body()));
     }
 
+    /** \brief Return a pointer at the index position
+     *
+     * \return char* the pointer
+     *
+     */
     template<class T>
     T Tail() {
-        return reinterpret_cast<T>(data.data() + packet_size);
+        return reinterpret_cast<T>(data.get() + index);
     }
 
-    void SetNodeData(std::shared_ptr<NetworkNodeData> nodedata) { this->node_data = std::move(nodedata); }
+    /** \brief Set the index to a new position.
+     *
+     *  0 is the first byte of the frame.
+     *
+     * \param new_position size_t new position.
+     *
+     */
+    void SetIndexPosition(size_t new_position) {
+        assert(new_position <= data_size);
+        index = new_position;
+    }
 
-    const std::shared_ptr<NetworkNodeData> NodeData() const { return node_data; }
-    int FileDescriptor() const { return fd; }
-
-    void Send(int fd, unsigned char major, unsigned char minor,
-        const std::function<void(unsigned char*,const unsigned char*,size_t)>& hasher,
-        unsigned char* tagptr,
-        unsigned int tag_size,
-        unsigned int tail_size);
-
-    void Send(const NetworkAddress& address, unsigned char major, unsigned char minor,
-        const std::function<void(unsigned char*,const unsigned char*,size_t)>& hasher,
-        unsigned char* tagptr,
-        unsigned int tag_size,
-        unsigned int tail_size);
-
-    void SendMessageNoVMAC(int fd, unsigned char major, unsigned char minor);
+    /** \brief Set the index to a new position.
+     *
+     *  0 is the first byte of the body.
+     *
+     * \param new_position size_t new position.
+     *
+     */
+    void Resize(size_t new_position) {
+        if (index < new_position + sizeof(Frame)) {
+            index = new_position + sizeof(Frame);
+        }
+        assert(index <= data_size);
+    }
 
     /** \brief Append data to the message using the copy method of the object
+     *
+     * The data is appended starting at the index position
      *
      * \param data const T& the data
      *
@@ -268,14 +326,59 @@ public:
 
     /** \brief Append data to the message using memcpy function
      *
+     * The data is appended starting at the index position
+     *
      * \param in const void* the pointer on the data
      * \param sizeBytes std::size_t the number of bytes to append
      *
      */
-    void append(const void* in, std::size_t sizeBytes);
+    void append(const void* in, std::size_t sizeBytes) {
+        Resize(BodySize() + sizeBytes);
+        std::memcpy(Tail<unsigned char*>() - sizeBytes, in, sizeBytes);
+    }
 
-    std::vector<char> data;
-    uint32_t packet_size;
+    /** \brief Return the position of the index
+     *
+     * \return size_t the position of the index
+     *
+     */
+    size_t PacketSize() const { return index; }
+
+    /** \brief Return the size available in the allocated buffer
+     *
+     * \return size_t the size
+     *
+     */
+    size_t BufferSize() const { return data_size; }
+
+    /** \brief NodeData instance setter
+     *
+     * \param nodedata the instance to store
+     *
+     */
+    void SetNodeData(std::shared_ptr<NetworkNodeData> nodedata) { this->node_data = std::move(nodedata); }
+
+    /** \brief NodeData instance getter
+     *
+     * \return the instance
+     *
+     */
+    const std::shared_ptr<NetworkNodeData> NodeData() const { return node_data; }
+
+    /** \brief File Descriptor getter
+     *
+     * \return the file descriptor
+     *
+     */
+    int FileDescriptor() const { return fd; }
+
+    // The pointer on the buffer
+    std::shared_ptr<char> data;
+    // the number of bytes allocated
+    size_t data_size;
+    // the position where data will be appended
+    size_t index;
+    // an instance of NodeData used during message distribution
     std::shared_ptr<NetworkNodeData> node_data;
     const int fd;
 };

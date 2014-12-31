@@ -7,8 +7,9 @@ namespace trillek { namespace network {
 
 class MessageUnauthenticated : public Message {
 public:
-    MessageUnauthenticated(const ConnectionData* cnxd, const int fd)
-        : Message(cnxd, fd), cx_data(cnxd) {}
+    MessageUnauthenticated(const std::shared_ptr<std::vector<char,TrillekAllocator<char>>>& buffer,
+                size_t index, size_t size, const ConnectionData* cnxd, const int fd)
+        : Message(buffer, index, size, cnxd, fd), cx_data(cnxd) {}
 
     const ConnectionData* CxData() { return cx_data; }
 private:
