@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <vector>
-#include <mutex>
 #include "controllers/network/authentication-handler.hpp"
 
 namespace trillek { namespace network {
@@ -81,18 +80,6 @@ public:
         return _auth_state.load();
     }
 
-    /** \brief Try to lock the mutex associated with this socket
-     *
-     * \return bool true if the lock is acquired, false otherwise
-     *
-     */
-    bool TryLockConnection() const { return _cx_mutex.try_lock(); }
-
-    /** \brief Release the mutex associated with this connection
-     *
-     */
-    void ReleaseConnection() const { _cx_mutex.unlock(); }
-
     /** \brief Get the instance of TCPConnection
      *
      * \return TCPConnection the connexion
@@ -111,8 +98,6 @@ private:
     mutable std::atomic<unsigned char> _auth_state;
     std::shared_ptr<NetworkNodeData> _node_data;
     static const std::vector<unsigned char> _states;
-    // guards the access to the socket
-    mutable std::mutex _cx_mutex;
 };
 } // network
 } // trillek
