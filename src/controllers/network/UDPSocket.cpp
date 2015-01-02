@@ -3,7 +3,7 @@
 #include "controllers/network/UDPSocket.hpp"
 
 namespace trillek { namespace network {
-	UDPSocket::UDPSocket()  : bound(false) { }
+	UDPSocket::UDPSocket()  : handle(-1), bound(false) { }
 	UDPSocket::~UDPSocket() {
 	}
 

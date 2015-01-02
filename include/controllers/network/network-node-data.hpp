@@ -12,7 +12,7 @@ public:
         _id(0) {}
 
     NetworkNodeData(const id_t id,
-        std::function<bool(const unsigned char*,const unsigned char*,size_t)>&& verifier,
+        std::function<bool(const unsigned char*,const unsigned char*,size_t,uint64_t)>&& verifier,
         NetworkAddress remote)
         : _id(id), _verifier(std::move(verifier)), _addr(std::move(remote)) {}
 
@@ -21,7 +21,7 @@ public:
      * \return const std::function<bool(const unsigned char*,const unsigned char*,size_t)>* const
      *
      */
-    const std::function<bool(const unsigned char*,const unsigned char*,size_t)>& Verifier() const {
+    const std::function<bool(const unsigned char*,const unsigned char*,size_t,uint64_t)>& Verifier() const {
         return _verifier;
     }
 
@@ -37,7 +37,7 @@ public:
 private:
     const NetworkAddress _addr;
     const id_t _id;
-    const std::function<bool(const unsigned char*,const unsigned char*,size_t)> _verifier;
+    const std::function<bool(const unsigned char*,const unsigned char*,size_t,uint64_t)> _verifier;
 };
 } // network
 } // trillek

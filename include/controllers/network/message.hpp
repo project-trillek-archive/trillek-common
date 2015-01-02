@@ -54,15 +54,19 @@ class NetworkNodeData;
 /** \brief The header of the message, without the preceding length
  */
 struct msg_hdr {
-    uint32_t flags;
+    uint16_t flags;
     unsigned char type_major;
     unsigned char type_minor;
-    char padding[6];
+    uint64_t timestamp;
 };
 
-struct msg_tail {
+struct msg_tail_stoc {
     id_t entity_id;
     unsigned char tag[ESIGN_SIZE];
+};
+
+struct msg_tail_ctos_udp {
+    uint64_t timestamp;
 };
 
 /** \brief The header of the frame, i.e the length
@@ -123,7 +127,7 @@ public:
      * \param minor unsigned char the minor code of the message
      *
      */
-    void SendUDP(id_t id, unsigned char major, unsigned char minor);
+    void SendUDP(id_t id, unsigned char major, unsigned char minor, uint64_t timestamp);
 
     /** \brief Send a message to a client using TCP
      *
@@ -148,7 +152,7 @@ public:
      * \param minor unsigned char the minor code of the message
      *
      */
-    void SendUDP(unsigned char major, unsigned char minor);
+    void SendUDP(unsigned char major, unsigned char minor, uint64_t timestamp);
 
     /** \brief Maps the body of the message to the structure of
      * the packet of type T
@@ -172,8 +176,45 @@ public:
      */
     id_t GetId() const;
 
+    /** \brief Get the timestamp of the message
+     *
+     * \return uint64_t the timestamp
+     *
+     */
+    uint64_t Timestamp() { return Header()->timestamp; }
+
 private:
-    /** \brief Send data to the network using a socket
+    /** \brief Send data to the network using a socket (client version)
+     *
+     * \param fd the socket to use
+     * \param major the major code
+     * \param minor the minor code
+     * \param the cryptotag generator
+     * \param tagptr pointer on the tag
+     * \param tag_size size of the cryptotag
+     *
+     */
+    void Send(int fd, unsigned char major, unsigned char minor,
+        const std::function<void(unsigned char*,const unsigned char*,size_t,uint64_t)>& hasher,
+        unsigned char* tagptr,
+        unsigned int tag_size);
+
+    /** \brief Send data to the network using a network address (client version)
+     *
+     * \param address the address to use
+     * \param major the major code
+     * \param minor the minor code
+     * \param the cryptotag generator
+     * \param tagptr pointer on the tag
+     * \param tag_size size of the cryptotag
+     *
+     */
+    void Send(const NetworkAddress& address, unsigned char major, unsigned char minor,
+        const std::function<void(unsigned char*,const unsigned char*,size_t,uint64_t)>& hasher,
+        unsigned char* tagptr,
+        unsigned int tag_size);
+
+    /** \brief Send data to the network using a socket (server version)
      *
      * \param fd the socket to use
      * \param major the major code
@@ -188,7 +229,7 @@ private:
         unsigned char* tagptr,
         unsigned int tag_size);
 
-    /** \brief Send data to the network using a network address
+    /** \brief Send data to the network using a network address (server version)
      *
      * \param address the address to use
      * \param major the major code
@@ -254,7 +295,7 @@ private:
     /** \brief Update the index to remove the tail of the message (client only)
      *
      */
-    void RemoveTailClient() { index -= sizeof(msg_tail); };
+    void RemoveTailClient() { index -= sizeof(msg_tail_stoc); };
 
     /** \brief Return a pointer on the body, i.e the data after the header
      *
@@ -356,6 +397,13 @@ private:
      *
      */
     void SetNodeData(std::shared_ptr<NetworkNodeData> nodedata) { this->node_data = std::move(nodedata); }
+
+    /** \brief Set the timestamp
+     *
+     * \param timestamp uint64_t the timestamp
+     *
+     */
+    void SetTimestamp(uint64_t timestamp) { Header()->timestamp = timestamp; }
 
     /** \brief NodeData instance getter
      *

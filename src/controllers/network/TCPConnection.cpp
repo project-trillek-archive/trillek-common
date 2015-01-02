@@ -2,7 +2,7 @@
 #include "controllers/network/network_os.h"
 
 namespace trillek { namespace network {
-	TCPConnection::TCPConnection(void) {}
+	TCPConnection::TCPConnection(void) : handle(-1) {}
 
 	TCPConnection::TCPConnection(socket_t hndl, int afn)
 		: handle(hndl)
