@@ -18,7 +18,7 @@
 namespace trillek {
 std::function<void(std::shared_ptr<TaskRequest<chain_t>>&&,frame_unit&&)> TaskRequest<chain_t>::queue_task;
 
-scheduler_tp TaskRequestBase::Now() const {
+inline scheduler_tp TaskRequestBase::Now() {
 #if defined(_MSC_VER)
     return scheduler_tp(TrillekGame::GetOS().GetTime());
 #else
