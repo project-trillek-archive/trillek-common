@@ -53,12 +53,16 @@ class NetworkNodeData;
 
 /** \brief The header of the message, without the preceding length
  */
+// Prevent insertion of padding bytes
+#pragma pack(push)
+#pragma pack(1)
 struct msg_hdr {
     uint16_t flags;
     unsigned char type_major;
     unsigned char type_minor;
     uint64_t timestamp;
 };
+#pragma pack(pop)
 
 struct msg_tail_stoc {
     id_t entity_id;
@@ -77,10 +81,14 @@ struct Frame_hdr {
 
 /** \brief The header including length
  */
+// Prevent insertion of padding bytes
+#pragma pack(push)
+#pragma pack(1)
 struct Frame {
     Frame_hdr fheader;
     msg_hdr mheader;
 };
+#pragma pack(pop)
 
 class Message {
 public:
