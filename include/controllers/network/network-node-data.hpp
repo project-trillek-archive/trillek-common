@@ -7,14 +7,15 @@ namespace trillek { namespace network {
 
 class NetworkNodeData {
 public:
-    NetworkNodeData(NetworkAddress remote) :
+    NetworkNodeData(NetworkAddress remote, uint64_t timestamp) :
         _addr(std::move(remote)),
-        _id(0) {}
+        _id(0),
+        _timestamp(timestamp) {}
 
     NetworkNodeData(const id_t id,
         std::function<bool(const unsigned char*,const unsigned char*,size_t,uint64_t)>&& verifier,
-        NetworkAddress remote)
-        : _id(id), _verifier(std::move(verifier)), _addr(std::move(remote)) {}
+        NetworkAddress remote, uint64_t timestamp)
+        : _id(id), _verifier(std::move(verifier)), _addr(std::move(remote)), _timestamp(timestamp) {}
 
     /** \brief Return the verifier associated to this socket
      *
@@ -32,12 +33,20 @@ public:
      */
     id_t Id() const { return _id; }
 
+    /** \brief Get the timestamp of the message
+     *
+     * \return uint64_t the timestamp
+     *
+     */
+    uint64_t Timestamp() const { return _timestamp; }
+
     const NetworkAddress& GetRemoteAddress() const { return _addr; }
 
 private:
     const NetworkAddress _addr;
     const id_t _id;
     const std::function<bool(const unsigned char*,const unsigned char*,size_t,uint64_t)> _verifier;
+    const uint64_t _timestamp;
 };
 } // network
 } // trillek

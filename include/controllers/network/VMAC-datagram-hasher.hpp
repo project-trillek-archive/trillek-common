@@ -18,7 +18,7 @@ class VMAC_DatagramHasher final : public std::enable_shared_from_this<VMAC_Datag
 
 public:
 
-    typedef std::unique_ptr<CryptoPP::FixedSizeAlignedSecBlock<byte,16>> buffer;
+    typedef std::shared_ptr<CryptoPP::FixedSizeAlignedSecBlock<byte,16>> buffer;
 
     /** \brief Constructor
      *
