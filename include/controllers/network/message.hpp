@@ -43,6 +43,7 @@
 // TEST_MSG
 #define TEST_MSG_TCP 0
 #define TEST_MSG_UDP 1
+#define UDP_ECHO 2
 
 #define IS_RESTRICTED(x)	((x >> 3) != 0)
 
