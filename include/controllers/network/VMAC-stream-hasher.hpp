@@ -72,7 +72,6 @@ private:
     void CalculateDigest(byte* digest, const byte* message, size_t len);
 
     CryptoPP::Integer _nonce;
-    const buffer _key;
     CryptoPP::VMAC<CryptoPP::AES,64> _hasher;
 };
 } // cryptography

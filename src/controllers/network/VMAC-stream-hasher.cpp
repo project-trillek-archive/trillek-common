@@ -9,9 +9,9 @@ using namespace CryptoPP;
 
 namespace trillek { namespace network { namespace cryptography {
 VMAC_StreamHasher::VMAC_StreamHasher(buffer&& key, const byte* nonce)
-    : _key(std::move(key)), _nonce(nonce, 8) {
-    _hasher.SetKey(_key->data(), _key->size(),
-        MakeParameters(Name::IV(), ConstByteArrayParameter(nonce, 8, false), false));
+    : _nonce(nonce, 8) {
+    _hasher.SetKey(key->data(), key->size(),
+        MakeParameters(Name::IV(), ConstByteArrayParameter(nonce, 8, true), false));
 };
 
 bool VMAC_StreamHasher::Verify(const byte* digest, const byte* message, size_t len) {
@@ -46,7 +46,7 @@ void VMAC_StreamHasher::CalculateDigest(byte* digest, const byte* message, size_
     _nonce.Encode(nonce, 8);
     _hasher.Resynchronize(nonce, 8);
     _hasher.CalculateDigest(digest, message, len);
-    /* Integer vmac, nonc, k, m;
+/*     Integer vmac, nonc, k, m;
     vmac.Decode(digest, 8);
     nonc.Decode(nonce, 8);
     k.Decode(_key->data(), 16);
@@ -56,7 +56,7 @@ void VMAC_StreamHasher::CalculateDigest(byte* digest, const byte* message, size_
     std::cout << "nonce is " << std::hex << nonc << std::endl;
     std::cout << "key is " << std::hex << k << std::endl;
     std::cout << "message is " << std::hex << m << std::endl;
-    */
+*/
 }
 } // cryptography
 } // network
