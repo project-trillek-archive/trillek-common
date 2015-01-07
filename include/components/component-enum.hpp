@@ -24,6 +24,12 @@ class Property;
 class Transform;
 class Interaction;
 
+namespace graphics {
+class LightBase;
+class Renderable;
+class CameraBase;
+}
+
 namespace physics {
 class Collidable;
 }
@@ -48,6 +54,9 @@ enum class Component : uint32_t {
     IsReferenceFrame,           // true if this entity has at least a child
     CombinedVelocity,           // ?
     Collidable,                 // wrapper object for body
+    Renderable,                 // entities with a rendered mesh
+    Light,                      // light source
+    Camera,                     // camera state and transform
     OxygenRate,                 // Oxygen rate associated with an entity (room...)
     Health,                     // Health level
     Immune,                     // true = Immune
@@ -66,6 +75,10 @@ template<Component C> struct type_trait;
 template<Component C> struct container_type_trait;
 
 } // namespace component
+
+TRILLEK_MAKE_COMPONENT(Renderable,"renderable",trillek::graphics::Renderable,System)
+TRILLEK_MAKE_COMPONENT(Light,"light",trillek::graphics::LightBase,System)
+TRILLEK_MAKE_COMPONENT(Camera,"camera",trillek::graphics::CameraBase,System)
 
 TRILLEK_MAKE_COMPONENT(Collidable,"collidable",trillek::physics::Collidable,System)
 TRILLEK_MAKE_COMPONENT(Velocity,"velocity",trillek::physics::VelocityStruct,Shared)
