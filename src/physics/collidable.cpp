@@ -1,7 +1,7 @@
 #include "physics/collidable.hpp"
 #include "transform.hpp"
 #include "trillek-game.hpp"
-#include "components/shared-component.hpp"
+#include "components/component.hpp"
 #include "systems/physics.hpp"
 #include "systems/resource-system.hpp"
 #include "resources/mesh.hpp"
@@ -73,7 +73,7 @@ bool Collidable::Initialize(const std::vector<Property> &properties) {
     }
 
     SetEntity(entity_id);
-    auto& entity_transform = TrillekGame::GetSharedComponent().Get<component::Component::GameTransform>(entity_id);
+    auto& entity_transform = component::Get<component::Component::GameTransform>(entity_id);
 
     if (shape == "capsule") {
         this->shape = std::move(std::unique_ptr<btCollisionShape>(new btCapsuleShape(this->radius, this->height)));
@@ -122,7 +122,7 @@ bool Collidable::Initialize(const std::vector<Property> &properties) {
 }
 
 void Collidable::SetEntity(unsigned int entity_id) {
-    auto& entity_transform = TrillekGame::GetSharedComponent().Get<component::Component::GameTransform>(entity_id);
+    auto& entity_transform = component::Get<component::Component::GameTransform>(entity_id);
     auto pos = entity_transform.GetTranslation();
     auto orientation = entity_transform.GetOrientation();
     this->motion_state = new btDefaultMotionState(btTransform(
