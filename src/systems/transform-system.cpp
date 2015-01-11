@@ -1,7 +1,6 @@
 #include "systems/transform-system.hpp"
 #include "transform.hpp"
 #include "trillek-game.hpp"
-#include "components/shared-component.hpp"
 #include "components/component.hpp"
 
 namespace trillek {
@@ -14,7 +13,7 @@ std::shared_ptr<TransformMap> TransformMap::instance = nullptr;
 bool TransformMap::Serialize(rapidjson::Document& document) {
     rapidjson::Value transform_node(rapidjson::kObjectType);
 
-    for (auto& entity_transform_wrapped : TrillekGame::GetSharedComponent().Map<Component::GameTransform>().Map()) {
+    for (auto& entity_transform_wrapped : GetRawContainer<Component::GameTransform>().Map().Map()) {
         auto& entity_transform = *Get<Component::GameTransform>(entity_transform_wrapped.second);
         rapidjson::Value transform_object(rapidjson::kObjectType);
 
@@ -140,7 +139,7 @@ bool TransformMap::Parse(rapidjson::Value& node) {
 
                     entity_transform.SetScale(glm::vec3(x, y, z));
                 }
-                TrillekGame::GetSharedComponent().Insert<Component::GameTransform>(entity_id, std::move(entity_transform));
+                Insert<Component::GameTransform>(entity_id, std::move(entity_transform));
             }
         }
 

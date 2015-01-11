@@ -68,14 +68,14 @@ public:
      *
      * \return void
      */
-    template<ComponentType cptype,Component C,class T>
-    void RegisterComponentType(ComponentAdder<cptype,C,T>&& adder) {
+    template<Component C, template <Component> class S>
+    void RegisterComponentType(ComponentAdder<S,C>&& adder) {
         // Store the type ID associated with the type name.
         LOGMSGC(DEBUG) << "adding factory of " << reflection::GetTypeName<std::integral_constant<Component,C>>();
         component_type_id[reflection::GetTypeName<std::integral_constant<Component,C>>()] = static_cast<uint32_t>(C);
 
         instance->factories[static_cast<uint32_t>(C)] =
-            std::bind(&ComponentAdder<cptype,C,T>::Create, adder, std::placeholders::_1, std::placeholders::_2);
+            std::bind(&ComponentAdder<S,C>::Create, adder, std::placeholders::_1, std::placeholders::_2);
     }
 
     template<class T>
@@ -98,36 +98,6 @@ public:
         };
 
         instance->factories[reflection::GetTypeID<T>()] = lambda;
-    }
-
-
-    /**
-     * \brief Register a type to be available for factory dynamic calls.
-     *
-     * \return void
-     */
-    template<Component C>
-    void RegisterComponentType() {
-        // Store the type ID associated with the type name.
-        component_type_id[reflection::GetTypeName<std::integral_constant<Component,C>>()] = static_cast<uint32_t>(C);
-
-        // Create a lambda function that calls Create with the correct template type.
-        // This will also add the component to the correct system.
-        auto lambda =
-        [] (const unsigned int entity_id, const std::vector<Property> &properties) {
-            auto inst = GetInstance();
-            auto comp = inst->Create<C>(entity_id, properties);
-
-            const unsigned int type_id = static_cast<uint32_t>(C);
-            if (comp && (inst->systems.count(type_id))) {
-                (ComponentAdder<DYNAMIC,C,SystemBase>(inst->systems.at(type_id)))
-                                                                    (entity_id, comp);
-                return true;
-            }
-            return false;
-        };
-
-        instance->factories[static_cast<uint32_t>(C)] = lambda;
     }
 
     /**
