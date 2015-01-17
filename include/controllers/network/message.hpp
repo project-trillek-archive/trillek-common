@@ -66,12 +66,7 @@ struct msg_hdr {
 #pragma pack(pop)
 
 struct msg_tail_stoc {
-    id_t entity_id;
-    unsigned char tag[ESIGN_SIZE];
-};
-
-struct msg_tail_ctos_udp {
-    uint64_t timestamp;
+    unsigned char tag[VMAC_SIZE];
 };
 
 /** \brief The header of the frame, i.e the length
