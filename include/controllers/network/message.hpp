@@ -91,19 +91,22 @@ public:
     friend class Authentication;
     friend class NetworkController;
     friend class Frame_req;
+    friend class TrillekAllocator<Message>;
     friend void packet_handler::PacketHandler::Process<NET_MSG,5>() const;
 
-    /** \brief Constructor
-     *
-     * \param buffer the buffer where to put the data
-     * \param index the index in the buffer where to start to write data
-     * \param size the number of bytes allocated in the buffer for this message
-     * \param cnxd (internal) an object used by the network
-     * \param fd (internal) the file descriptor
-     *
-     */
-    Message(const std::shared_ptr<std::vector<char,TrillekAllocator<char>>>& buffer,
-                 size_t index = 0, size_t size = 0, const ConnectionData* cnxd = nullptr, int fd = -1);
+    static std::shared_ptr<Message> NewUDPReliableMessage(id_t id, size_t size) {
+        return NewTCPMessage(id, size);
+    }
+
+    static std::shared_ptr<Message> NewUDPMessage(id_t id, size_t size) {
+        return NewTCPMessage(id, size);
+    }
+
+    static std::shared_ptr<Message> NewTCPMessage(id_t id, size_t size) {
+        char* ptr = TrillekAllocator<char>().allocate(size);
+        auto buffer = std::shared_ptr<char>(ptr);
+        return std::allocate_shared<Message>(TrillekAllocator<Message>(), std::move(buffer), size);
+    }
 
     virtual ~Message() {}
 
@@ -187,7 +190,25 @@ public:
      */
     uint64_t Timestamp() { return Header()->timestamp; }
 
+protected:
+    /** \brief Constructor
+     *
+     * \param buffer the buffer where to put the data
+     * \param index the index in the buffer where to start to write data
+     * \param size the number of bytes allocated in the buffer for this message
+     * \param cnxd (internal) an object used by the network
+     * \param fd (internal) the file descriptor
+     *
+     */
+    Message(std::shared_ptr<char>&& buffer, size_t size, const ConnectionData* cnxd = nullptr);
+
 private:
+    static std::shared_ptr<Message> NewReceivedMessage(size_t size, const ConnectionData* cnxd = nullptr, int fd = -1) {
+        char* ptr = TrillekAllocator<char>().allocate(size);
+        auto buffer = std::shared_ptr<char>(ptr);
+        return std::allocate_shared<Message>(TrillekAllocator<Message>(), std::move(buffer), size, cnxd);
+    }
+
     /** \brief Send data to the network using a socket (client version)
      *
      * \param fd the socket to use
