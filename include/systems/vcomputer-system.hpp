@@ -1,41 +1,41 @@
 #ifndef CPU_HPP_INCLUDED
 #define CPU_HPP_INCLUDED
 
-#include "trillek-scheduler.hpp"
-#include "system-base.hpp"
-#include "VComputer.hpp"
-#include "devices/GKeyb.hpp"
 #include <memory>
 #include <fstream>
+
+#include "trillek-scheduler.hpp"
+#include "system-base.hpp"
 #include "systems/dispatcher.hpp"
 #include "os-event.hpp"
 #include "resources/pixel-buffer.hpp"
-#include "devices/TDA.hpp"
+
+#include "vc.hpp"
 
 namespace trillek {
 
 class ComponentBase;
 
-using namespace vm;
+using namespace computer;
 
-enum CPU_TYPE { TR3200, DCPU, DCPUN };
+enum CPU_TYPE { TR3200 };
 
 // Simple pair of TDA screen to pixelbuffer.
-typedef std::pair<std::shared_ptr<resource::PixelBuffer>, std::shared_ptr<dev::tda::TDADev>> ScreenImage;
+typedef std::pair<std::shared_ptr<resource::PixelBuffer>, std::shared_ptr<tda::TDADev>> ScreenImage;
 
 // Struct to hold various CPU specific items together.
 struct Computer final {
-    Computer() : rom(new byte_t[32 * 1024]), rom_size(0) { }
+    Computer() : rom(new Byte[32 * 1024]), rom_size(0) { }
     ~Computer() {
         if (this->rom) {
             this->vc->Off();
             delete this->rom;
         }
     }
-    byte_t *rom;
+    Byte *rom;
     size_t rom_size;
     std::unique_ptr<VComputer> vc;
-    std::list<std::shared_ptr<IDevice>> devices;
+    std::list<std::shared_ptr<Device>> devices;
 };
 
 class VComputerSystem final : public SystemBase,
@@ -62,9 +62,9 @@ public:
      *
      * \param const id_t entityID The entity ID the computer/CPU belongs to.
      * \param const unsigned int The slot to assign device to.
-     * \param std::shared_ptr<IDevice> device The device to install.
+     * \param std::shared_ptr<Device> device The device to install.
      */
-    void SetDevice(const id_t entity_id, const unsigned int slot, std::shared_ptr<IDevice> device);
+    void SetDevice(const id_t entity_id, const unsigned int slot, std::shared_ptr<Device> device);
 
     /** \brief Remove a device from the specified slot.
      *
@@ -142,12 +142,12 @@ public:
 private:
 
     //VComputer vc;
-    //byte_t *rom;
+    //Byte *rom;
     //size_t rom_size;
     frame_unit delta; // The time since the last HandleEvents was called.
 
     std::shared_ptr<resource::PixelBuffer> pBuffer;
-    std::shared_ptr<dev::gkeyboard::GKeyboardDev> gkeyb;
+    std::shared_ptr<gkeyboard::GKeyboardDev> gkeyb;
     std::map<id_t, ScreenImage> pixelBuffers;
     std::map<id_t, Computer> computers;
 };
