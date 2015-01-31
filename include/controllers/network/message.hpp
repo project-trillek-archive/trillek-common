@@ -105,7 +105,7 @@ public:
     static std::shared_ptr<Message> NewTCPMessage(id_t id, size_t size) {
         char* ptr = TrillekAllocator<char>().allocate(size);
         auto buffer = std::shared_ptr<char>(ptr);
-        return std::allocate_shared<Message>(TrillekAllocator<Message>(), std::move(buffer), size);
+        return std::allocate_shared<Message,TrillekAllocator<Message>>(TrillekAllocator<Message>(), std::move(buffer), size);
     }
 
     virtual ~Message() {}

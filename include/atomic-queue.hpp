@@ -5,7 +5,7 @@
 #include <atomic>
 #include <list>
 #include <memory>
-#include <trillek-allocator.hpp>
+#include <memory/trillek-allocator.hpp>
 
 namespace trillek {
 
