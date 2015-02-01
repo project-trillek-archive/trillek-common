@@ -13,6 +13,7 @@
 #include <chrono>
 
 #include "os-event.hpp"
+#include "systems/system-base.hpp"
 
 namespace trillek {
 
@@ -243,6 +244,18 @@ private:
     double old_mouse_x, old_mouse_y;
     double last_time; // The time at the last call to GetDeltaTime().
     bool mouse_lock; // If mouse lock is enabled causing the cursor to snap to mid-window each movement event.
+};
+
+class SystemSystem final : public SystemBase {
+public:
+    SystemSystem() : glfw_os(new OS()) {}
+    ~SystemSystem();
+
+    void HandleEvents(frame_tp timepoint);
+    void RunBatch() const {}
+    void Terminate() {}
+
+    std::unique_ptr<OS> glfw_os;
 };
 
 } // End of trillek

@@ -29,7 +29,7 @@ struct MeshGroup {
 
 class Mesh : public ResourceBase {
 public:
-    Mesh() { }
+    Mesh() : isdynamic(false) { }
     virtual ~Mesh() { }
 
     /**
@@ -48,8 +48,10 @@ public:
     size_t GetMeshGroupCount() const {
         return this->mesh_groups.size();
     }
+    bool IsDynamic() const { return isdynamic; }
 protected:
     std::vector<std::shared_ptr<MeshGroup>> mesh_groups;
+    bool isdynamic;
 };
 
 } // End of resource
