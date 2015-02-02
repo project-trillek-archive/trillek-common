@@ -28,6 +28,7 @@ namespace graphics {
 class LightBase;
 class Renderable;
 class CameraBase;
+class SixDOFCamera;
 }
 
 namespace physics {
@@ -78,7 +79,7 @@ template<Component C> struct container_type_trait;
 
 TRILLEK_MAKE_COMPONENT(Renderable,"renderable",trillek::graphics::Renderable,System)
 TRILLEK_MAKE_COMPONENT(Light,"light",trillek::graphics::LightBase,System)
-TRILLEK_MAKE_COMPONENT(Camera,"camera",trillek::graphics::CameraBase,System)
+TRILLEK_MAKE_COMPONENT(Camera,"camera",trillek::graphics::SixDOFCamera,System)
 
 TRILLEK_MAKE_COMPONENT(Collidable,"collidable",trillek::physics::Collidable,System)
 TRILLEK_MAKE_COMPONENT(Velocity,"velocity",trillek::physics::VelocityStruct,Shared)
