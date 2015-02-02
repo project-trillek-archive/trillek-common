@@ -39,7 +39,7 @@ protected:
 namespace trillek {
 
 TEST_F(FIFOAllocatorTest, VectorDynamicResize10) {
-    UnalignedAllocator<double> alloc(unaligned_buffer);
+    UnalignedAllocator<double> alloc(unaligned_buffer.get());
     auto index = 10;
     std::vector<double,UnalignedAllocator<double>> myvector(alloc);
     FillRandom(myvector, index);
@@ -49,7 +49,7 @@ TEST_F(FIFOAllocatorTest, VectorDynamicResize10) {
 }
 
 TEST_F(FIFOAllocatorTest, TripleVector) {
-    UnalignedAllocator<double> alloc(unaligned_buffer);
+    UnalignedAllocator<double> alloc(unaligned_buffer.get());
     auto index = 10;
     std::vector<double,UnalignedAllocator<double>> myvector1(alloc);
     // we resize dynamically to request space for 2, 4, 8 and 16 elements
@@ -134,14 +134,14 @@ TEST_F(FIFOAllocatorTest, TripleVector) {
 }
 
 TEST_F(FIFOAllocatorTest, VectorTooBig) {
-    UnalignedAllocator<double> alloc(unaligned_buffer);
+    UnalignedAllocator<double> alloc(unaligned_buffer.get());
     auto index = 40;
     std::vector<double,UnalignedAllocator<double>> myvector(alloc);
     EXPECT_THROW(myvector.reserve(index), std::bad_alloc) << "allocation of memory should throw";
 }
 
 TEST_F(FIFOAllocatorTest, MultipleBuffers) {
-    UnalignedAllocator<double> alloc(unaligned_buffer);
+    UnalignedAllocator<double> alloc(unaligned_buffer.get());
     std::vector<std::vector<double,UnalignedAllocator<double>>> v(50, std::vector<double,UnalignedAllocator<double>>(alloc));
     auto index = 20;
     for (auto& elt : v) {
@@ -157,7 +157,7 @@ TEST_F(FIFOAllocatorTest, MultipleBuffers) {
 }
 
 TEST_F(FIFOAllocatorTest, CopyAssigment) {
-    UnalignedAllocator<double> alloc(unaligned_buffer);
+    UnalignedAllocator<double> alloc(unaligned_buffer.get());
     std::vector<std::vector<double,UnalignedAllocator<double>>> v(50, std::vector<double,UnalignedAllocator<double>>(alloc));
     auto index = 12;
     for (auto& elt : v) {
@@ -175,7 +175,7 @@ TEST_F(FIFOAllocatorTest, CopyAssigment) {
 }
 
 TEST_F(FIFOAllocatorTest, MoveAssignment) {
-    UnalignedAllocator<double> alloc(unaligned_buffer);
+    UnalignedAllocator<double> alloc(unaligned_buffer.get());
     std::vector<std::vector<double,UnalignedAllocator<double>>> v(50, std::vector<double,UnalignedAllocator<double>>(alloc));
     auto index = 12;
     for (auto& elt : v) {
@@ -193,7 +193,7 @@ TEST_F(FIFOAllocatorTest, MoveAssignment) {
 }
 
 TEST_F(FIFOAllocatorTest, CopyConstructor) {
-    UnalignedAllocator<double> alloc(unaligned_buffer);
+    UnalignedAllocator<double> alloc(unaligned_buffer.get());
     std::vector<std::vector<double,UnalignedAllocator<double>>> v(50, std::vector<double,UnalignedAllocator<double>>(alloc));
     auto index = 12;
     for (auto& elt : v) {
@@ -210,7 +210,7 @@ TEST_F(FIFOAllocatorTest, CopyConstructor) {
 }
 
 TEST_F(FIFOAllocatorTest, MoveConstructor) {
-    UnalignedAllocator<double> alloc(unaligned_buffer);
+    UnalignedAllocator<double> alloc(unaligned_buffer.get());
     std::vector<std::vector<double,UnalignedAllocator<double>>> v(50, std::vector<double,UnalignedAllocator<double>>(alloc));
     auto index = 12;
     for (auto& elt : v) {
@@ -227,7 +227,7 @@ TEST_F(FIFOAllocatorTest, MoveConstructor) {
 }
 
 TEST_F(FIFOAllocatorTest, AlignedVectorDynamicResize10) {
-    AlignedAllocator<double> alloc(aligned_buffer);
+    AlignedAllocator<double> alloc(aligned_buffer.get());
     auto index = 10;
     std::vector<double,AlignedAllocator<double>> myvector(alloc);
     FillRandom(myvector, index);
@@ -236,7 +236,7 @@ TEST_F(FIFOAllocatorTest, AlignedVectorDynamicResize10) {
     }
 }
 TEST_F(FIFOAllocatorTest, AlignedTripleVector) {
-    AlignedAllocator<double> alloc(aligned_buffer);
+    AlignedAllocator<double> alloc(aligned_buffer.get());
     auto index = 10;
     std::vector<double,AlignedAllocator<double>> myvector1(alloc);
     // we resize dynamically to request space for 2, 4, 8 and 16 elements
@@ -320,7 +320,7 @@ TEST_F(FIFOAllocatorTest, AlignedTripleVector) {
     }
 }
 TEST_F(FIFOAllocatorTest, AlignedVectorTooBig) {
-    AlignedAllocator<double> alloc(aligned_buffer);
+    AlignedAllocator<double> alloc(aligned_buffer.get());
     auto index = 40;
     std::vector<double,AlignedAllocator<double>> myvector(alloc);
     EXPECT_THROW(myvector.reserve(index), std::bad_alloc) << "allocation of memory should throw";

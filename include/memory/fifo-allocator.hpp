@@ -26,6 +26,8 @@ public:
     typedef std::true_type propagate_on_container_move_assignment;
     typedef std::true_type propagate_on_container_swap;
 
+    typedef FIFOAllocator* self_raw_pointer_type;
+
     FIFOAllocator() {
         auto aligned_size = Align(size);
         buffer.reserve(aligned_size + Alignment);
@@ -159,11 +161,6 @@ public:
     size_t max_size() const {
         return size_t(-1);
     }
-
-    // this variable is owned by TrillekAllocator for pimpl idiom
-    // it is stored here to avoid to make a copy of a shared_ptr each time we copy the allocator.
-    // a raw pointer is stored in TrillekAllocator.
-    std::shared_ptr<FIFOAllocator> self;
 
 private:
     template<class T>

@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include "trillek.hpp"
+#include <iostream>
 
 extern size_t gAllocatedSize;
 
@@ -26,9 +27,7 @@ public:
     typedef typename Alloc::propagate_on_container_swap propagate_on_container_swap;
 
     /// Default constructor
-    TrillekAllocator(std::shared_ptr<Alloc> alloc) NOEXCEPT : alloc(alloc.get()) {
-        this->alloc->self = std::move(alloc);
-    }
+    TrillekAllocator(Alloc* alloc) NOEXCEPT : alloc(alloc) {}
     /// Copy constructor
     TrillekAllocator(const TrillekAllocator& other) NOEXCEPT : alloc(other.alloc) {}
     /// Move constructor
@@ -41,10 +40,7 @@ public:
     TrillekAllocator(TrillekAllocator<U,Alloc>&& other) NOEXCEPT : alloc(std::move(other.alloc)) {}
 
     /// Destructor
-    ~TrillekAllocator() {
-        // we move the pointer before deleting the object storing it.
-        std::move(alloc->self).reset();
-    }
+    ~TrillekAllocator() {}
 
     /// Copy
     TrillekAllocator<T,Alloc>& operator=(TrillekAllocator other) NOEXCEPT {
@@ -131,13 +127,17 @@ public:
         typedef TrillekAllocator<U,Alloc> other;
     };
 
+    // called by copy assignment operator of containers only if
+    // propagate_on_container_copy_assignment == true
+    // && alloc this != alloc other (i.e other can't deallocate objects allocated by this)
+    // && always_equal == false
     TrillekAllocator<T,Alloc> select_on_container_copy_construction() {
         auto copy = std::make_shared<Alloc>();
         return TrillekAllocator<T,Alloc>(std::move(copy));
     }
 
 private:
-    Alloc* alloc;
+    typename Alloc::self_raw_pointer_type alloc;
 };
 
 template<class T>
