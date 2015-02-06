@@ -22,186 +22,42 @@ static std::shared_ptr<component::Container> CreateComponent(
     return std::move(sharedcomp);
 }
 
-template<Component type, class T = typename type_trait<type>::value_type, typename std::enable_if<std::is_base_of<ComponentBase, typename type_trait<type>::value_type>::value>::type* = nullptr>
-static std::shared_ptr<component::Container> CreateComponent(
-        id_t entity_id, const std::vector<Property> &properties) {
-    auto type_id = static_cast<uint32_t>(type);
-    auto ret = component::Create<type>(T());
-    if (component::Get<type>(ret)->Initialize(properties)) {
-        return std::move(ret);
-    }
-    LOGMSG(ERROR) << "Error while initializing class component "
-        << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
-    return nullptr;
-
-}
-
-template<ComponentType cptype,Component type,class T = typename type_trait<type>::value_type>
-class ComponentAdder;
-
-template<Component C>
-class ComponentAdder<DYNAMIC,C> {
-public:
-    ComponentAdder(SystemBase* system) : system(*system) {};
-
+template<template <Component> class S,Component C>
+struct ComponentAdder {
     bool Create(id_t entity_id, const std::vector<Property> &properties) {
         auto comp = CreateComponent<C>(entity_id, properties);
 
         if (comp) {
-            system.AddDynamicComponent
-                    (entity_id,std::move(comp));
-            return true;
-        }
-        return false;
-    }
-private:
-    SystemBase& system;
-};
-
-template<Component C,class T>
-class ComponentAdder<SYSTEM,C,T> {
-public:
-    ComponentAdder(component::System& system) : system(system) {};
-
-    bool Create(id_t entity_id, const std::vector<Property> &properties) {
-        auto comp = CreateComponent<C>(entity_id, properties);
-
-        if (comp) {
-            LOGMSG(DEBUG) << "Adding system component "
+            LOGMSG(DEBUG) << "Adding component "
                 << reflection::GetTypeName<std::integral_constant<Component,C>>()
                 << " to entity #" << entity_id;
-            system.Map<C>().insert(std::make_pair(std::move(entity_id), std::move(comp)));
-            SystemContainer<C>::bitmap[entity_id] = true;
+            Insert<C>(entity_id, std::move(comp));
             return true;
         }
         return false;
     }
-private:
-    component::System& system;
 };
 
-template<Component type>
-class ComponentAdder<SYSTEM,type,bool> {
+template<Component C>
+class ComponentAdder<SystemValue,C> {
 public:
-    ComponentAdder(component::SystemValue& system) : system(system) {};
-
     bool Create(id_t entity_id, const std::vector<Property> &properties) {
         bool result = false;
-        auto comp = component::Initialize<type>(result, properties);
+        auto comp = component::Initialize<C>(result, properties);
         if (!result) {
             LOGMSGC(ERROR) << "Error while initializing component "
-                << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
+                            << reflection::GetTypeName<std::integral_constant<Component,C>>()
+                            << " for entity id #" << entity_id;
             return false;
         }
 
-        LOGMSG(DEBUG) << "Adding system component " << reflection::GetTypeName<std::integral_constant<Component,type>>() << " to entity #" << entity_id;
-        system.Insert<type>(entity_id, std::move(comp));
-        return true;
-    }
-
-private:
-    component::SystemValue& system;
-};
-
-template<Component type>
-class ComponentAdder<SYSTEM,type,uint32_t> {
-public:
-    ComponentAdder(component::SystemValue& system) : system(system) {};
-
-    bool Create(id_t entity_id, const std::vector<Property> &properties) {
-        bool result = false;
-        auto comp = component::Initialize<type>(result, properties);
-        if (!result) {
-            LOGMSGC(ERROR) << "Error while initializing component "
-                << reflection::GetTypeName<std::integral_constant<Component,type>>()
-                << " for entity id #" << entity_id;
-            return false;
-        }
-
-        LOGMSG(DEBUG) << "Adding system component "
-            << reflection::GetTypeName<std::integral_constant<Component,type>>()
+        LOGMSG(DEBUG) << "Adding component "
+            << reflection::GetTypeName<std::integral_constant<Component,C>>()
             << " to entity #" << entity_id;
-        system.Insert<type>(entity_id, std::move(comp));
+        Insert<C>(entity_id, std::move(comp));
         return true;
     }
-
-private:
-    component::SystemValue& system;
 };
-
-template<Component type>
-class ComponentAdder<SYSTEM,type,float> {
-public:
-    ComponentAdder(component::SystemValue& system) : system(system) {};
-
-    bool Create(id_t entity_id, const std::vector<Property> &properties) {
-        bool result = false;
-        auto comp = component::Initialize<type>(result, properties);
-        if (!result) {
-            LOGMSGC(ERROR) << "Error while initializing component "
-                << reflection::GetTypeName<std::integral_constant<Component,type>>()
-                << " for entity id #" << entity_id;
-            return false;
-        }
-
-        LOGMSG(DEBUG) << "Adding system component "
-            << reflection::GetTypeName<std::integral_constant<Component,type>>()
-            << " to entity #" << entity_id;
-        system.Insert<type>(entity_id, std::move(comp));
-        return true;
-    }
-
-private:
-    component::SystemValue& system;
-};
-
-template<Component type>
-class ComponentAdder<SYSTEM,type,double> {
-public:
-    ComponentAdder(component::SystemValue& system) : system(system) {};
-
-    bool Create(id_t entity_id, const std::vector<Property> &properties) {
-        bool result = false;
-        auto comp = component::Initialize<type>(result, properties);
-        if (!result) {
-            LOGMSGC(ERROR) << "Error while initializing component "
-                << reflection::GetTypeName<std::integral_constant<Component,type>>()
-                << " for entity id #" << entity_id;
-            return false;
-        }
-
-        LOGMSG(DEBUG) << "Adding system component "
-            << reflection::GetTypeName<std::integral_constant<Component,type>>()
-            << " to entity #" << entity_id;
-        system.Insert<type>(entity_id, std::move(comp));
-        return true;
-    }
-
-private:
-    component::SystemValue& system;
-};
-
-template<Component type>
-class ComponentAdder<SHARED, type, bool> {
-public:
-    ComponentAdder(component::Shared& shared) : shared(shared) {};
-
-    bool Create(id_t entity_id, const std::vector<Property> &properties) {
-        auto comp = CreateComponent<type>(entity_id, properties);
-
-        if (comp) {
-            LOGMSG(DEBUG) << "Adding shared component "
-                << reflection::GetTypeName<std::integral_constant<Component, type>>()
-                << " to entity #" << entity_id;
-            shared.Map<type>().Insert(entity_id, std::move(comp));
-            return true;
-        }
-        return false;
-    }
-private:
-    component::Shared& shared;
-};
-
 }
 
 #endif // COMPONENT_ADDER_HPP_INCLUDED

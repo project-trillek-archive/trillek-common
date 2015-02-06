@@ -2,8 +2,6 @@
 #define SYSTEM_COMPONENT_HPP_INCLUDED
 
 #include <map>
-#include "component.hpp"
-#include "component-container.hpp"
 #include "bitmap.hpp"
 
 namespace trillek { namespace component {
@@ -24,56 +22,62 @@ typename SystemContainer<type>::container_type SystemContainer<type>::container;
 template<Component C>
 BitMap<uint32_t> SystemContainer<C>::bitmap;
 
-class System final {
+template<Component C>
+class System final : public ContainerBase {
 public:
     System() {};
     ~System() {};
 
-    template<Component type>
-    typename type_trait<type>::value_type& Get(id_t entity_id) {
-        return *component::Get<type>(Map<type>().at(entity_id));
+    typename type_trait<C>::value_type& Get(id_t entity_id) {
+        return *component::Get<C>(Map().at(entity_id));
     }
 
-    template<Component type>
     std::shared_ptr<Container> GetContainer(id_t entity_id) {
-        return Map<type>().Map().at(entity_id);
+        return Map().at(entity_id);
     }
 
-    template<Component type>
-    std::shared_ptr<typename type_trait<type>::value_type> GetSharedPtr(id_t entity_id) {
-        const auto& ptr = Map<type>().at(entity_id);
-        return component::Get<type>(ptr);
+    std::shared_ptr<typename type_trait<C>::value_type> GetSharedPtr(id_t entity_id) {
+        const auto& ptr = Map().at(entity_id);
+        return component::Get<C>(ptr);
     }
 
-    template<Component C>
     bool Has(id_t entity_id) {
-        return Bitmap<C>().at(entity_id);
+        return Bitmap().at(entity_id);
     }
 
-    template<Component type, class V>
-    void Insert(id_t entity_id, V&& value) {
-        Map<type>().insert(std::make_pair(std::move(entity_id), component::Create<type>(std::forward<V>(value))));
-        LOGMSG(DEBUG) << "system inserting component " << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity #" << entity_id;
-        SystemContainer<type>::bitmap[entity_id] = true;
+    template<class V>
+    void Insert(id_t entity_id, V&& value, typename std::enable_if<!util::is_shared_ptr<typename std::decay<V>::type>::value>::type* = 0) {
+        Map().insert(std::make_pair(std::move(entity_id), component::Create<C>(std::forward<V>(value))));
+        LOGMSG(DEBUG) << "system inserting component " << reflection::GetTypeName<std::integral_constant<Component,C>>() << " for entity #" << entity_id;
+        SystemContainer<C>::bitmap[entity_id] = true;
     }
 
-    template<Component type, class V>
-    void Update(id_t entity_id, V&& value) {
-        Map<type>().at(entity_id) = component::Create<type>(std::forward<V>(value));
+    template<class V>
+    void Insert(id_t entity_id, V&& value, typename std::enable_if<util::is_shared_ptr<typename std::decay<V>::type>::value>::type* = 0) {
+        Map().insert(std::make_pair(std::move(entity_id), std::forward<V>(value)));
+        LOGMSG(DEBUG) << "system inserting component " << reflection::GetTypeName<std::integral_constant<Component,C>>() << " for entity #" << entity_id;
+        SystemContainer<C>::bitmap[entity_id] = true;
     }
 
-    template<Component type>
+    template<class V>
+    void Update(id_t entity_id, V&& value, typename std::enable_if<!util::is_shared_ptr<typename std::decay<V>::type>::value>::type* = 0) {
+        Map().at(entity_id) = component::Create<C>(std::forward<V>(value));
+    }
+
+    template<class V>
+    void Update(id_t entity_id, V&& value, typename std::enable_if<util::is_shared_ptr<typename std::decay<V>::type>::value>::type* = 0) {
+        Map().at(entity_id) = std::forward<V>(value);
+    }
+
     void Remove(id_t entity_id) {
-        Map<type>().erase(entity_id);
-        SystemContainer<type>::bitmap[entity_id] = false;
+        Map().erase(entity_id);
+        SystemContainer<C>::bitmap.at(entity_id) = false;
     }
 
-    template<Component C>
     typename SystemContainer<C>::container_type& Map() {
         return SystemContainer<C>::container;
     }
 
-    template<Component C>
     const BitMap<uint32_t>& Bitmap() {
         return SystemContainer<C>::bitmap;
     }

@@ -2,7 +2,6 @@
 
 #include "trillek-game.hpp"
 #include "components/component.hpp"
-#include "components/system-component.hpp"
 #include "hardware/cpu.hpp"
 #include "trillek.hpp"
 #include "logging.hpp"
@@ -17,7 +16,7 @@ namespace trillek {
 
 using namespace component;
 
-VComputerSystem::VComputerSystem() : system(game.GetSystemComponent()) {
+VComputerSystem::VComputerSystem() {
     event::Dispatcher<KeyboardEvent>::GetInstance()->Subscribe(this);
     event::EventQueue<HardwareAction>::Subscribe(this);
     event::EventQueue<InteractEvent>::Subscribe(this);
@@ -39,7 +38,7 @@ void VComputerSystem::HandleEvents(frame_tp timepoint) {
         });
     OnTrue(Bitmap<Component::VDisplay>(),
         [&](id_t entity_id) {
-            auto& disp = system.Get<Component::VDisplay>(entity_id);
+            auto& disp = Get<Component::VDisplay>(entity_id);
             disp.ScreenUpdate();
         });
 }
@@ -48,13 +47,13 @@ void VComputerSystem::OnEvent(const HardwareAction& event) {
     switch(event.cid) {
     case Component::VDisplay:
         if(Has<Component::VDisplay>(event.entity_id)) {
-            auto& disp = system.Get<Component::VDisplay>(event.entity_id);
+            auto& disp = Get<Component::VDisplay>(event.entity_id);
             disp.LinkDevice();
         }
         break;
     case Component::VKeyboard:
         if(Has<Component::VKeyboard>(event.entity_id)) {
-            auto& keyb = system.Get<Component::VKeyboard>(event.entity_id);
+            auto& keyb = Get<Component::VKeyboard>(event.entity_id);
             keyb.LinkDevice();
         }
         break;
@@ -66,17 +65,17 @@ void VComputerSystem::OnEvent(const InteractEvent& event) {
     switch(event.act) {
     case Action::IA_POWER:
         if(event.num == (uint32_t)Component::VDisplay && Has<Component::VDisplay>(event.entity)) {
-            game.GetSystemComponent().Get<Component::VDisplay>(event.entity).PowerToggle();
+            Get<Component::VDisplay>(event.entity).PowerToggle();
             return;
         }
         else if(event.num == (uint32_t)Component::VComputer && Has<Component::VComputer>(event.entity)) {
-            game.GetSystemComponent().Get<Component::VComputer>(event.entity).PowerToggle();
+            Get<Component::VComputer>(event.entity).PowerToggle();
             return;
         }
         break;
     case Action::IA_USE:
         if(event.num == (uint32_t)Component::VKeyboard && Has<Component::VKeyboard>(event.entity)) {
-            auto& cm = game.GetSystemComponent().Get<Component::VKeyboard>(event.entity);
+            auto& cm = Get<Component::VKeyboard>(event.entity);
             if(cm.IsActive()) {
                 cm.SetActive(false);
             }

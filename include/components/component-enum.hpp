@@ -1,12 +1,20 @@
 #ifndef COMPONENT_ENUM_HPP_INCLUDED
 #define COMPONENT_ENUM_HPP_INCLUDED
 
-#define TRILLEK_MAKE_COMPONENT(enumerator,name,type,container) \
+#define TRILLEK_MAKE_COMPONENT(enumerator,name,ctype,ccontainer) \
     namespace component {\
-    template<> struct type_trait<Component::enumerator> { typedef type value_type; };\
-    typedef type enumerator##_type;\
+    template<> struct type_trait<Component::enumerator> { typedef ctype value_type; };\
+    typedef ctype enumerator##_type;\
     \
-    template<> struct container_type_trait<Component::enumerator> { typedef container container_type; };\
+    template<> struct container_type_trait<static_cast<typename std::underlying_type<Component>::type>(Component::enumerator)> {\
+        typedef ccontainer<Component::enumerator> container_type;\
+        \
+        static ContainerBase* find(typename std::underlying_type<Component>::type component_id) {\
+            return component_id == static_cast<typename std::underlying_type<Component>::type>(Component::enumerator) ?\
+                &ContainerRef<container_type>::container\
+                : container_type_trait<static_cast<typename std::underlying_type<Component>::type>(Component::enumerator)+1>::find(component_id);\
+        }\
+    };\
     }\
     \
     namespace reflection {\
@@ -33,6 +41,8 @@ class SixDOFCamera;
 
 namespace physics {
 class Collidable;
+struct VelocityStruct;
+struct VelocityMaxStruct;
 }
 
 namespace hw {
@@ -44,9 +54,9 @@ class VKeyboard;
 namespace component {
 
 class Container;
-class System;
-class Shared;
-class SystemValue;
+template<Component C> class System;
+template<Component C> class Shared;
+template<Component C> class SystemValue;
 
 enum class Component : uint32_t {
     Velocity = 1,               // instant displacement
@@ -70,36 +80,28 @@ enum class Component : uint32_t {
     VComputer,                  // Virtual computer and CPU
     VKeyboard,                  // Keyboard for virtual computers
     VDisplay,                   // Display for a virtual computer
+    END                         // Keep this entry at the end
 };
 
+// A class to hold a container reference
+template<class T>
+struct ContainerRef {
+    static T container;
+};
+
+
+template<class T>
+T ContainerRef<T>::container;
+
 template<Component C> struct type_trait;
-template<Component C> struct container_type_trait;
+
+template<typename std::underlying_type<Component>::type> struct container_type_trait;
+
+struct ContainerBase {
+    virtual ~ContainerBase() {}
+};
 
 } // namespace component
-
-TRILLEK_MAKE_COMPONENT(Renderable,"renderable",trillek::graphics::Renderable,System)
-TRILLEK_MAKE_COMPONENT(Light,"light",trillek::graphics::LightBase,System)
-TRILLEK_MAKE_COMPONENT(Camera,"camera",trillek::graphics::SixDOFCamera,System)
-
-TRILLEK_MAKE_COMPONENT(Collidable,"collidable",trillek::physics::Collidable,System)
-TRILLEK_MAKE_COMPONENT(Velocity,"velocity",trillek::physics::VelocityStruct,Shared)
-TRILLEK_MAKE_COMPONENT(VelocityMax,"velocity-max",trillek::physics::VelocityMaxStruct,Shared)
-TRILLEK_MAKE_COMPONENT(ReferenceFrame,"reference-frame",id_t,SystemValue)
-TRILLEK_MAKE_COMPONENT(IsReferenceFrame,"is-reference-frame",bool,SystemValue)
-TRILLEK_MAKE_COMPONENT(CombinedVelocity,"combined-velocity",trillek::physics::VelocityStruct,System)
-TRILLEK_MAKE_COMPONENT(OxygenRate,"oxygen-rate",float_t,SystemValue)
-TRILLEK_MAKE_COMPONENT(Health,"health",uint32_t,SystemValue)
-TRILLEK_MAKE_COMPONENT(Immune,"immune",bool,SystemValue)
-TRILLEK_MAKE_COMPONENT(Movable,"movable",bool,SystemValue)
-TRILLEK_MAKE_COMPONENT(Moving,"moving",bool,SystemValue)
-TRILLEK_MAKE_COMPONENT(MoveOffset,"move-offset",trillek::Transform,System)
-TRILLEK_MAKE_COMPONENT(GraphicTransform,"graphic-transform",trillek::Transform, Shared)
-TRILLEK_MAKE_COMPONENT(GameTransform,"game-transform",trillek::Transform, Shared)
-TRILLEK_MAKE_COMPONENT(Interactable,"interaction",trillek::Interaction, System)
-TRILLEK_MAKE_COMPONENT(VComputer,"trillek-computer",trillek::hw::Computer, System)
-TRILLEK_MAKE_COMPONENT(VKeyboard,"keyboard",trillek::hw::VKeyboard, System)
-TRILLEK_MAKE_COMPONENT(VDisplay,"display",trillek::hw::VDisplay, System)
-
 } // namespace trillek
 
 #endif // COMPONENT_ENUM_HPP_INCLUDED

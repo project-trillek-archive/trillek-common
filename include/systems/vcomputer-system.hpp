@@ -5,7 +5,6 @@
 #include "system-base.hpp"
 #include <memory>
 #include "systems/dispatcher.hpp"
-#include "components/system-component.hpp"
 #include "event-queue.hpp"
 #include "interaction.hpp"
 #include "os-event.hpp"
@@ -77,7 +76,6 @@ public:
 private:
 
     frame_unit delta; // The time since the last HandleEvents was called.
-    component::System& system;
 };
 
 } // namespace trillek

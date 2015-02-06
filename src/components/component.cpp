@@ -11,27 +11,6 @@
 namespace trillek { namespace component {
 
 template<>
-struct ContainerRef<System> {
-    static System& container;
-};
-
-System& ContainerRef<System>::container = game.GetSystemComponent();
-
-template<>
-struct ContainerRef<SystemValue> {
-    static SystemValue& container;
-};
-
-SystemValue& ContainerRef<SystemValue>::container = game.GetSystemValueComponent();
-
-template<>
-struct ContainerRef<Shared> {
-    static Shared& container;
-};
-
-Shared& ContainerRef<Shared>::container = game.GetSharedComponent();
-
-template<>
 std::shared_ptr<Container> Initialize<Component::VelocityMax>(const std::vector<Property> &properties) {
     glm::vec3 lmax(0.0f,0.0f,0.0f), amax(0.0f,0.0f,0.0f);
     id_t entity_id;
@@ -71,11 +50,11 @@ id_t Initialize<Component::ReferenceFrame>(bool& result, const std::vector<Prope
         std::string name = p.GetName();
         if (name == "entity") {
             reference_id = p.Get<id_t>();
-            if (! game.GetSharedComponent().Has<Component::Velocity>(reference_id)) {
+            if (! Has<Component::Velocity>(reference_id)) {
                 LOGMSG(ERROR) << "ReferenceFrame: entity #" << reference_id << "does not have velocity";
                 return 0;
             }
-            ref_velocity = game.GetSharedComponent().Get<Component::Velocity>(reference_id);
+            ref_velocity = Get<Component::Velocity>(reference_id);
             result = true;
         }
         else if (name == "entity_id") {
@@ -87,8 +66,8 @@ id_t Initialize<Component::ReferenceFrame>(bool& result, const std::vector<Prope
     }
     if (result) {
         // create IsReferenceFrame and CombinedVelocity components
-        game.GetSystemValueComponent().Insert<Component::IsReferenceFrame>(reference_id, true);
-        game.GetSystemComponent().Insert<Component::CombinedVelocity>(entity_id, ref_velocity);
+        Insert<Component::IsReferenceFrame>(reference_id, true);
+        Insert<Component::CombinedVelocity>(entity_id, ref_velocity);
         return reference_id;
     }
     return 0;
