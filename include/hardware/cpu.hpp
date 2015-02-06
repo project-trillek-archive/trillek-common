@@ -32,7 +32,7 @@ public:
     bool Initialize(const std::vector<Property> &properties) override;
 
     bool LoadROMFile(const std::string& fname);
-    void SetDevice(uint32_t slot, std::shared_ptr<computer::IDevice> device);
+    void SetDevice(uint32_t slot, std::shared_ptr<computer::Device> device);
     void RemoveDevice(uint32_t slot);
 
     /** Turns the computer on.
@@ -50,7 +50,7 @@ public:
     std::unique_ptr<Byte[]> rom;
     size_t rom_size;
     std::unique_ptr<computer::VComputer> vc;
-    std::list<std::shared_ptr<computer::IDevice>> devices;
+    std::list<std::shared_ptr<computer::Device>> devices;
 };
 
 class VHardware {
@@ -65,7 +65,7 @@ public:
         slot(v.slot),
         linked(v.linked) { }
 
-    std::shared_ptr<computer::IDevice> device;
+    std::shared_ptr<computer::Device> device;
 
     bool LinkDevice();
     void QueueLinkDevice(component::Component c);
@@ -84,7 +84,7 @@ public:
     VDisplayAPI() {}
     virtual ~VDisplayAPI() {}
     virtual void ResetState() = 0;
-    virtual void ScreenUpdate(computer::IDevice*, resource::PixelBuffer*) = 0;
+    virtual void ScreenUpdate(computer::Device*, resource::PixelBuffer*) = 0;
 };
 
 /**
@@ -128,18 +128,18 @@ class VKeyAPI {
 public:
     VKeyAPI() {}
     virtual ~VKeyAPI() {}
-    virtual void TranslateKeyDown(computer::IDevice* keyb, int scan, int mods) = 0;
-    virtual void TranslateKeyUp(computer::IDevice* keyb, int scan, int mods) = 0;
-    virtual void TranslateChar(computer::IDevice* keyb, int keycode, int mods) = 0;
+    virtual void TranslateKeyDown(computer::Device* keyb, int scan, int mods) = 0;
+    virtual void TranslateKeyUp(computer::Device* keyb, int scan, int mods) = 0;
+    virtual void TranslateChar(computer::Device* keyb, int keycode, int mods) = 0;
 };
 
 class VKeyGeneric final : public VKeyAPI {
 public:
     VKeyGeneric() { lastscan = 0; }
     ~VKeyGeneric() {}
-    void TranslateKeyDown(computer::IDevice* keyb, int scan, int mods);
-    void TranslateKeyUp(computer::IDevice* keyb, int scan, int mods);
-    void TranslateChar(computer::IDevice* keyb, int keycode, int mods);
+    void TranslateKeyDown(computer::Device* keyb, int scan, int mods);
+    void TranslateKeyUp(computer::Device* keyb, int scan, int mods);
+    void TranslateChar(computer::Device* keyb, int keycode, int mods);
 
     int lastscan;
 };

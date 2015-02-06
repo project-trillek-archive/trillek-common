@@ -79,7 +79,7 @@ bool Computer::LoadROMFile(const std::string& fname) {
     return true;
 }
 
-void Computer::SetDevice(uint32_t slot, std::shared_ptr<computer::IDevice> device) {
+void Computer::SetDevice(uint32_t slot, std::shared_ptr<computer::Device> device) {
     this->vc->AddDevice(slot, device);
     this->devices.push_back(device);
 }
@@ -140,7 +140,7 @@ public:
         std::memset(&screen, 0, sizeof(computer::tda::TDAScreen));
     }
 
-    void ScreenUpdate(computer::IDevice* dev, resource::PixelBuffer* surface) override {
+    void ScreenUpdate(computer::Device* dev, resource::PixelBuffer* surface) override {
         ((computer::tda::TDADev*)dev)->DumpScreen(screen);
         computer::tda::TDAtoRGBATexture(screen, (DWord*)surface->LockWrite(), this->framecount);
         surface->UnlockWrite();
@@ -276,7 +276,7 @@ static const uint8_t keytranslation_generic[] = {
     0,0,0,0,0, 0,0,0,0, /* 331-339 */
     0xE, 0xF, 0x6, 0xE, 0xF, 0x6 /* 340-346 */
 };
-void VKeyGeneric::TranslateKeyDown(computer::IDevice* keyb, int scan, int mods) {
+void VKeyGeneric::TranslateKeyDown(computer::Device* keyb, int scan, int mods) {
     lastscan = scan;
     if(scan > 255 && scan <= 346) {
         uint8_t k = keytranslation_generic[scan - 256];
@@ -286,10 +286,10 @@ void VKeyGeneric::TranslateKeyDown(computer::IDevice* keyb, int scan, int mods) 
         }
     }
 }
-void VKeyGeneric::TranslateKeyUp(computer::IDevice* keyb, int scan, int mods) {
+void VKeyGeneric::TranslateKeyUp(computer::Device* keyb, int scan, int mods) {
 
 }
-void VKeyGeneric::TranslateChar(computer::IDevice* keyb, int keycode, int mods) {
+void VKeyGeneric::TranslateChar(computer::Device* keyb, int keycode, int mods) {
     ((computer::gkeyboard::GKeyboardDev*)keyb)
         ->EnforceSendKeyEvent((uint16_t)lastscan, (uint8_t)keycode, mods & 0x7);
 }
