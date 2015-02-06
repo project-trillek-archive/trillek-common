@@ -34,11 +34,9 @@ typedef std::chrono::nanoseconds frame_unit;
 // TODO : wait for the fix from Microsoft
 typedef time_point<system_clock, frame_unit> scheduler_tp;
 typedef int64_t frame_tp;
-typedef time_point<system_clock, frame_unit> glfw_tp;
 #else
 typedef time_point<steady_clock, frame_unit> scheduler_tp;
 typedef int64_t frame_tp;
-typedef time_point<steady_clock, frame_unit> glfw_tp;
 #endif
 
 class TaskRequestBase {
@@ -55,7 +53,7 @@ public:
 
     virtual void RunTask() = 0;
 
-    glfw_tp Now() const;
+    static scheduler_tp Now();
 
     bool IsNow() const {
         return timestamp < Now();

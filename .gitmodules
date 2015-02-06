@@ -5,7 +5,12 @@
 	path = trillek-vcomputer-module
 	url = https://github.com/trillek-team/trillek-vcomputer-module
 	ignore = dirty
-[submodule "raknet"]
-	path = raknet
-	url = https://github.com/OculusVR/RakNet.git
+[submodule "crypto++"]
+	path = crypto++
+	url = https://github.com/catageek/cryptopp
+	depth = 1
+	ignore = dirty
+[submodule "kqueue"]
+	path = kqueue
+	url = https://github.com/catageek/libkqueue.git
 	ignore = dirty

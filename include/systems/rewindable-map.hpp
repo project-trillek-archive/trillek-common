@@ -2,7 +2,7 @@
 #define REWINDABLE_MAP_HPP_INCLUDED
 #include <iostream>
 #include "bitmap.hpp"
-#include "trillek-allocator.hpp"
+#include "memory/trillek-allocator.hpp"
 #include "systems/async-data.hpp"
 #include "transform.hpp"
 
