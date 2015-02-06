@@ -94,7 +94,7 @@ class VDisplay final : public VHardware,
         public PoweredDevice, public ComponentBase {
 public:
     VDisplay() : sid(~0), mode(DISP_OFF) { }
-    VDisplay(VDisplay&& v) : VHardware::VHardware(std::forward<VHardware>(v)),
+    VDisplay(VDisplay&& v) : VHardware(std::forward<VHardware>(v)),
         surface(std::move(v.surface)), sid(v.sid), mode(v.mode) { }
     VDisplay(const VDisplay&) = delete;
     ~VDisplay() {
@@ -150,9 +150,9 @@ public:
 class VKeyboard final : public VHardware, public ComponentBase,
         public event::Subscriber<KeyboardEvent> {
 public:
-    VKeyboard() : keybapi(), VHardware::VHardware(), active(false) { }
+    VKeyboard() : keybapi(), VHardware(), active(false) { }
     VKeyboard(VKeyboard&& v) : keybapi(std::move(v.keybapi)),
-            VHardware::VHardware(std::forward<VHardware>(v)) {
+            VHardware(std::forward<VHardware>(v)) {
         this->component_type_id = v.component_type_id; // ComponentBase
         active = v.active;
     }
