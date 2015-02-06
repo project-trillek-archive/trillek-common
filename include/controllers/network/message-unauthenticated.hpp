@@ -5,16 +5,12 @@
 
 namespace trillek { namespace network {
 
-class MessageUnauthenticated : public Message {
+class MessageUnauthenticated final : public Message {
 public:
-    static std::shared_ptr<MessageUnauthenticated> NewReceivedMessage(size_t size, const ConnectionData* cnxd = nullptr, int fd = -1) {
-        char* ptr = TrillekAllocator<char>().allocate(size);
-        auto buffer = std::shared_ptr<char>(ptr);
-        return std::allocate_shared<MessageUnauthenticated>(TrillekAllocator<MessageUnauthenticated>(), std::move(buffer), size, cnxd, fd);
-    }
+    MessageUnauthenticated(vector_type&& buffer, size_t size, const ConnectionData* cnxd, int fd)
+            : Message(buffer.data(), size, cnxd), buffer(std::move(buffer)), cx_data(cnxd), fd(fd) {}
 
-    MessageUnauthenticated(std::shared_ptr<char>&& buffer, size_t size, const ConnectionData* cnxd, int fd)
-            : Message(std::move(buffer), size, cnxd), cx_data(cnxd), fd(fd) {}
+    ~MessageUnauthenticated() {}
 
     /** \brief File Descriptor getter
      *
@@ -25,6 +21,7 @@ public:
 
     const ConnectionData* CxData() { return cx_data; }
 private:
+    const vector_type buffer;
     const ConnectionData* const cx_data;
     const int fd;
 };

@@ -88,25 +88,13 @@ struct Frame {
 
 class Message {
 public:
+    typedef TrillekAllocator<char> allocator_type;
+    typedef std::vector<char,allocator_type> vector_type;
+
     friend class Authentication;
     friend class NetworkController;
     friend class Frame_req;
-    friend class TrillekAllocator<Message>;
     friend void packet_handler::PacketHandler::Process<NET_MSG,5>() const;
-
-    static std::shared_ptr<Message> NewUDPReliableMessage(id_t id, size_t size) {
-        return NewTCPMessage(id, size);
-    }
-
-    static std::shared_ptr<Message> NewUDPMessage(id_t id, size_t size) {
-        return NewTCPMessage(id, size);
-    }
-
-    static std::shared_ptr<Message> NewTCPMessage(id_t id, size_t size) {
-        char* ptr = TrillekAllocator<char>().allocate(size);
-        auto buffer = std::shared_ptr<char>(ptr);
-        return std::allocate_shared<Message,TrillekAllocator<Message>>(TrillekAllocator<Message>(), std::move(buffer), size);
-    }
 
     virtual ~Message() {}
 
@@ -127,14 +115,19 @@ public:
         return *this;
     }
 
-    /** \brief Send a message to a client using UDP
-     *
-     * \param id id_t the id of the entity to which the message must be sent
-     * \param major unsigned char the major code of the message
-     * \param minor unsigned char the minor code of the message
-     *
-     */
-    void SendUDP(id_t id, unsigned char major, unsigned char minor, uint64_t timestamp);
+    template<class T>
+    static std::shared_ptr<T> New(size_t size, const ConnectionData* cnxd = nullptr, int fd = -1) {
+        auto buffer = typename T::vector_type(typename T::allocator_type());
+        buffer.reserve(size);
+        return std::allocate_shared<T>(TrillekAllocator<T>(), std::move(buffer), size, cnxd, fd);
+    }
+
+    template<class T>
+    static std::shared_ptr<T> New(id_t id, size_t size) {
+        auto buffer = typename T::vector_type(T::GetAllocator());
+        buffer.reserve(size);
+        return std::allocate_shared<T>(TrillekAllocator<T>(), std::move(buffer), size);
+    }
 
     /** \brief Send a message to a client using TCP
      *
@@ -143,7 +136,7 @@ public:
      * \param minor unsigned char the minor code of the message
      *
      */
-    void SendTCP(id_t id, unsigned char major, unsigned char minor);
+    virtual void Send(id_t id, unsigned char major, unsigned char minor) {};
 
     /** \brief Send a message to a server using TCP
      *
@@ -151,15 +144,7 @@ public:
      * \param minor unsigned char the minor code of the message
      *
      */
-    void SendTCP(unsigned char major, unsigned char minor);
-
-    /** \brief Send a message to a server using UDP
-     *
-     * \param major unsigned char the major code of the message
-     * \param minor unsigned char the minor code of the message
-     *
-     */
-    void SendUDP(unsigned char major, unsigned char minor, uint64_t timestamp);
+    virtual void Send(unsigned char major, unsigned char minor) {};
 
     /** \brief Maps the body of the message to the structure of
      * the packet of type T
@@ -200,16 +185,26 @@ protected:
      * \param fd (internal) the file descriptor
      *
      */
-    Message(std::shared_ptr<char>&& buffer, size_t size, const ConnectionData* cnxd = nullptr);
+    Message(char* buffer, size_t size, const ConnectionData* cnxd = nullptr, int fd = -1);
 
-private:
-    static std::shared_ptr<Message> NewReceivedMessage(size_t size, const ConnectionData* cnxd = nullptr, int fd = -1) {
-        char* ptr = TrillekAllocator<char>().allocate(size);
-        auto buffer = std::shared_ptr<char>(ptr);
-        return std::allocate_shared<Message>(TrillekAllocator<Message>(), std::move(buffer), size, cnxd);
+    /** \brief Set the timestamp
+     *
+     * \param timestamp uint64_t the timestamp
+     *
+     */
+    void SetTimestamp(uint64_t timestamp) { Header()->timestamp = timestamp; }
+
+    /** \brief Return a pointer at the index position
+     *
+     * \return char* the pointer
+     *
+     */
+    template<class T>
+    T Tail() {
+        return reinterpret_cast<T>(data + index);
     }
 
-    /** \brief Send data to the network using a socket (client version)
+    /** \brief Prepare and send data to the network using a socket (client version)
      *
      * \param fd the socket to use
      * \param major the major code
@@ -224,22 +219,7 @@ private:
         unsigned char* tagptr,
         unsigned int tag_size);
 
-    /** \brief Send data to the network using a network address (client version)
-     *
-     * \param address the address to use
-     * \param major the major code
-     * \param minor the minor code
-     * \param the cryptotag generator
-     * \param tagptr pointer on the tag
-     * \param tag_size size of the cryptotag
-     *
-     */
-    void Send(const NetworkAddress& address, unsigned char major, unsigned char minor,
-        const std::function<void(unsigned char*,const unsigned char*,size_t,uint64_t)>& hasher,
-        unsigned char* tagptr,
-        unsigned int tag_size);
-
-    /** \brief Send data to the network using a socket (server version)
+    /** \brief Prepare and send data to the network using a socket (server version)
      *
      * \param fd the socket to use
      * \param major the major code
@@ -254,7 +234,7 @@ private:
         unsigned char* tagptr,
         unsigned int tag_size);
 
-    /** \brief Send data to the network using a network address (server version)
+    /** \brief Prepare and send data to the network using a network address (server version)
      *
      * \param address the address to use
      * \param major the major code
@@ -268,6 +248,29 @@ private:
         const std::function<void(unsigned char*,const unsigned char*,size_t)>& hasher,
         unsigned char* tagptr,
         unsigned int tag_size);
+
+    /** \brief Prepare the message to be sent
+     *
+     * \param major the major code
+     * \param minor the minor code
+     *
+     */
+    void Prepare(unsigned char major, unsigned char minor);
+
+private:
+    /** \brief Send data to the network using a socket
+     *
+     * \param fd the socket to use
+     * \param the cryptotag generator
+     * \param tagptr pointer on the tag
+     * \param tag_size size of the cryptotag
+     *
+     */
+    void SendNow(int fd,
+        const std::function<void(unsigned char*,const unsigned char*,size_t,uint64_t)>& hasher,
+        unsigned char* tagptr,
+        unsigned int tag_size);
+
 
     /** \brief Send data to the network using a socket
      *
@@ -299,7 +302,7 @@ private:
      *
      */
     msg_hdr* Header() {
-        return reinterpret_cast<msg_hdr*>(data.get() + sizeof(Frame_hdr));
+        return reinterpret_cast<msg_hdr*>(data + sizeof(Frame_hdr));
     }
 
     /** \brief Return a pointer on the frame, beginning at the length field
@@ -308,7 +311,7 @@ private:
      *
      */
     Frame_hdr* FrameHeader() {
-        return reinterpret_cast<Frame_hdr*>(data.get());
+        return reinterpret_cast<Frame_hdr*>(data);
     }
 
     /** \brief Update the index to remove the VMAC tag
@@ -328,7 +331,7 @@ private:
      *
      */
     char* Body() {
-        return (data.get() + sizeof(Frame));
+        return (data + sizeof(Frame));
     }
 
     /** \brief Return the size of the body of the message
@@ -338,16 +341,6 @@ private:
      */
     size_t BodySize() {
         return (Tail<unsigned char*>() - reinterpret_cast<unsigned char*>(Body()));
-    }
-
-    /** \brief Return a pointer at the index position
-     *
-     * \return char* the pointer
-     *
-     */
-    template<class T>
-    T Tail() {
-        return reinterpret_cast<T>(data.get() + index);
     }
 
     /** \brief Set the index to a new position.
@@ -423,13 +416,6 @@ private:
      */
     void SetNodeData(std::shared_ptr<NetworkNodeData> nodedata) { this->node_data = std::move(nodedata); }
 
-    /** \brief Set the timestamp
-     *
-     * \param timestamp uint64_t the timestamp
-     *
-     */
-    void SetTimestamp(uint64_t timestamp) { Header()->timestamp = timestamp; }
-
     /** \brief NodeData instance getter
      *
      * \return the instance
@@ -438,7 +424,7 @@ private:
     const std::shared_ptr<NetworkNodeData> NodeData() const { return node_data; }
 
     // The pointer on the buffer
-    std::shared_ptr<char> data;
+    char* data;
     // the number of bytes allocated
     size_t data_size;
     // the position where data will be appended
