@@ -2,12 +2,16 @@
 
 #include "trillek.hpp"
 #include "logging.hpp"
-
+#include "components/component.hpp"
+#include "devices/tda.hpp"
+#include "hardware/cpu.hpp"
 #include "vc.hpp"
 
 namespace trillek {
 
+using namespace component;
 using namespace computer;
+
 VComputerSystem::VComputerSystem() {
     this->gkeyb = std::make_shared<gkeyboard::GKeyboardDev>();
 
@@ -38,7 +42,7 @@ VComputerSystem::VComputerSystem() {
     }
     */
     event::Dispatcher<KeyboardEvent>::GetInstance()->Subscribe(this);
-    event::EventQueue<HardwareAction>::Subscribe(this);
+//    event::EventQueue<HardwareAction>::Subscribe(this);
     event::EventQueue<InteractEvent>::Subscribe(this);
 };
 
@@ -119,14 +123,11 @@ bool VComputerSystem::LoadROMFile(const id_t entity_id, std::string fname) {
             std::fprintf(stderr, "An error hapen when was reading the file %s\n", fname.c_str());
             return false;
         }
-        break;
-    case Component::VKeyboard:
-        if(Has<Component::VKeyboard>(event.entity_id)) {
-            auto& keyb = Get<Component::VKeyboard>(event.entity_id);
-            keyb.LinkDevice();
-        }
-        break;
+        this->computers[entity_id].rom_size = size;
+        vc->SetROM(this->computers[entity_id].rom, this->computers[entity_id].rom_size);
+        return true;
     }
+    return false;
 }
 
 void VComputerSystem::OnEvent(const InteractEvent& event) {
@@ -157,13 +158,35 @@ void VComputerSystem::OnEvent(const InteractEvent& event) {
     }
 }
 
+
+void VComputerSystem::TurnComptuerOn(const id_t entity_id) {
+    if (this->computers.find(entity_id) != this->computers.end()) {
+        this->computers[entity_id].vc->On();
+    }
+}
+
+void VComputerSystem::TurnComptuerOff(const id_t entity_id) {
+    if (this->computers.find(entity_id) != this->computers.end()) {
+        this->computers[entity_id].vc->Off();
+    }
+}
+
+void VComputerSystem::AddComponent(const id_t entity_id, std::shared_ptr<ComponentBase> component) { }
+
 void VComputerSystem::Notify(const KeyboardEvent* key_event) {
     switch (key_event->action) {
     case KeyboardEvent::KEY_DOWN:
-        this->gkeyb->SendKeyEvent(key_event->scancode, key_event->key, gkeyboard::KEY_MODS::KEY_MOD_NONE);
+    //this->gkeyb->SendKeyEvent(key_event->scancode, key_event->key, computer::gkeyboard::KEY_MODS::KEY_MOD_NONE);
+        LOGMSGC(INFO) << "KEY_DOWN " << key_event->scancode << ", " << key_event->key;
+        break;
+    case KeyboardEvent::KEY_CHAR:
+        LOGMSGC(INFO) << "KEY_CHAR " << key_event->scancode << ", " << key_event->key;
+        break;
+    case KeyboardEvent::KEY_UP:
+        LOGMSGC(INFO) << "KEY_UP " << key_event->scancode << ", " << key_event->key;
+        break;
     default:
         break;
     }
 }
-
 } // namespace trillek

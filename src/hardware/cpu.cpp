@@ -60,9 +60,9 @@ bool Computer::Initialize(const std::vector<Property> &properties) {
     }
 
     if(!Has<Component::Interactable>(entity_id)) {
-        game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
+        component::Insert<Component::Interactable>(entity_id, Interaction(entity_id));
     }
-    auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
+    auto& act = component::Get<Component::Interactable>(entity_id);
     act.AddAction(Action::IA_POWER, (uint32_t)Component::VComputer);
 
     return true;
@@ -114,7 +114,7 @@ bool VHardware::LinkDevice() {
     using namespace component;
     if(this->linked) return true;
     if(entity_link > 0 && Has<component::Component::VComputer>(entity_link)) {
-        auto& vcr = game.GetSystemComponent().Get<Component::VComputer>(entity_link);
+        auto& vcr = component::Get<Component::VComputer>(entity_link);
         vcr.SetDevice(this->slot, this->device);
         this->linked = true;
         LOGMSG(INFO) << "Hardware: Successfully linked " << entity_id;
@@ -127,7 +127,7 @@ bool VHardware::LinkDevice() {
 }
 
 void VHardware::QueueLinkDevice(component::Component c) {
-    event::QueueEvent(HardwareAction(HardwareAction::ATTACH, c, entity_id));
+//    event::QueueEvent(HardwareAction(HardwareAction::ATTACH, c, entity_id));
 }
 
 class VDisplayAPI_TDA final : public VDisplayAPI {
@@ -205,9 +205,9 @@ bool VDisplay::Initialize(const std::vector<Property> &properties) {
     QueueLinkDevice(Component::VDisplay);
 
     if(!Has<Component::Interactable>(entity_id)) {
-        game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
+        component::Insert<Component::Interactable>(entity_id, Interaction(entity_id));
     }
-    auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
+    auto& act = component::Get<Component::Interactable>(entity_id);
     act.AddAction(Action::IA_POWER, (uint32_t)Component::VDisplay);
 
     return true;
@@ -347,9 +347,9 @@ bool VKeyboard::Initialize(const std::vector<Property> &properties) {
     QueueLinkDevice(Component::VKeyboard);
 
     if(!Has<Component::Interactable>(entity_id)) {
-        game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
+        component::Insert<Component::Interactable>(entity_id, Interaction(entity_id));
     }
-    auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
+    auto& act = component::Get<Component::Interactable>(entity_id);
     act.AddAction(Action::IA_USE, (uint32_t)Component::VKeyboard);
 
     return true;

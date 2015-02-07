@@ -42,7 +42,7 @@ struct Computer final {
 
 class VComputerSystem final : public SystemBase,
     public event::Subscriber<KeyboardEvent>,
-    public event::LocalHandler<HardwareAction>,
+//    public event::LocalHandler<HardwareAction>,
     public event::LocalHandler<InteractEvent> {
 public:
 
@@ -135,8 +135,17 @@ public:
     void Terminate() override { }
 
     void Notify(const KeyboardEvent* key_event) override;
-    void OnEvent(const HardwareAction&) override;
+//    void OnEvent(const HardwareAction&) override;
     void OnEvent(const InteractEvent&) override;
+
+    /**
+     * \brief Adds a component to the system.
+     *
+     * \param const id_t entityID The entity ID the compoennt belongs to.
+     * \param std::shared_ptr<ComponentBase> component The component to add.
+     */
+    virtual void AddComponent(const id_t entity_id, std::shared_ptr<ComponentBase> component);
+
 private:
 
     //VComputer vc;

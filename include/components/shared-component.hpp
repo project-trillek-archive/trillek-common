@@ -76,10 +76,6 @@ public:
         Map().Commit(frame);
     }
 
-    const SharedContainerConst<id_t,typename type_trait<C>::value_type>& GetLastPositiveCommit() {
-        return Map().GetLastPositiveCommit();
-    }
-
     const BitMap<uint32_t>& GetLastPositiveBitMap() {
         return Map().GetLastPositiveBitMap();
     }
@@ -88,8 +84,12 @@ public:
         return Map().Bitmap();
     }
 
-    RewindableMap<id_t, std::shared_ptr<const Container>,frame_tp,30>& Map() {
+    auto Map() -> decltype((SharedContainer<C,typename type_trait<C>::value_type>::container)) {
         return SharedContainer<C,typename type_trait<C>::value_type>::container;
+    }
+
+    auto GetLastPositiveCommit() -> decltype(this->Map().GetLastPositiveCommit()) {
+        return Map().GetLastPositiveCommit();
     }
 };
 

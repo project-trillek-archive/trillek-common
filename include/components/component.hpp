@@ -145,7 +145,8 @@ static ContainerBase* GetRawContainer(typename std::underlying_type<Component>::
  *
  */
 template<Component C>
-static const typename type_trait<C>::value_type& Get(id_t entity_id, typename std::enable_if<!std::is_same<typename type_trait<C>::value_type,bool>::value>::type* = 0) {
+static auto Get(id_t entity_id)
+    -> decltype(GetRawContainer<C>().Get(entity_id)) {
     return GetRawContainer<C>().Get(entity_id);
 }
 
@@ -155,11 +156,11 @@ static const typename type_trait<C>::value_type& Get(id_t entity_id, typename st
  * \return the component value (bool)
  *
  */
-template<Component C>
+/*template<Component C>
 static typename type_trait<C>::value_type Get(id_t entity_id, typename std::enable_if<std::is_same<typename type_trait<C>::value_type,bool>::value>::type* = 0) {
     return GetRawContainer<C>().Get(entity_id);
 }
-
+*/
 /** \brief Return the pointer of the component value
  *
  * The returned value can be copied to another component
@@ -197,7 +198,7 @@ std::shared_ptr<const Container> GetConstContainer(id_t entity_id) {
  *
  */
 template<Component C>
-std::shared_ptr<const typename type_trait<C>::value_type> GetSharedPtr(id_t entity_id) {
+auto GetSharedPtr(id_t entity_id) -> decltype(GetRawContainer<C>().GetSharedPtr(entity_id)) {
     return GetRawContainer<C>().GetSharedPtr(entity_id);
 }
 
@@ -286,9 +287,7 @@ static void Commit(frame_tp frame) {
  *
  */
 template<Component C>
-static const std::map<id_t,const typename type_trait<C>::value_type, std::less<id_t>,
-            TrillekAllocator<std::pair<const id_t,typename type_trait<C>::value_type>>>&
-                                                         GetLastPositiveCommit() {
+static auto GetLastPositiveCommit() -> decltype(GetRawContainer<C>().GetLastPositiveCommit()) {
     return GetRawContainer<C>().GetLastPositiveCommit();
 }
 

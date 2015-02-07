@@ -1,9 +1,7 @@
 #ifndef COMPONENT_ADDER_HPP_INCLUDED
 #define COMPONENT_ADDER_HPP_INCLUDED
 
-#include "shared-component.hpp"
-#include "system-component.hpp"
-#include "system-component-value.hpp"
+#include "component.hpp"
 
 namespace trillek {
 
@@ -14,13 +12,28 @@ static std::shared_ptr<component::Container> CreateComponent(
         id_t entity_id, const std::vector<Property> &properties) {
     auto type_id = static_cast<uint32_t>(type);
     auto sharedcomp = component::Initialize<type>(properties);
-    if (!sharedcomp) {
-        LOGMSG(ERROR) << "Error while initializing component "
-                        << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
-        return nullptr;
+    if (sharedcomp) {
+        return std::move(sharedcomp);
     }
-    return std::move(sharedcomp);
+    LOGMSG(ERROR) << "Error while initializing component "
+                    << reflection::GetTypeName<std::integral_constant<Component,type>>()
+                    << " for entity id #" << entity_id;
+    return nullptr;
 }
+
+template<Component type, class T = typename type_trait<type>::value_type, typename std::enable_if<std::is_base_of<ComponentBase, typename type_trait<type>::value_type>::value>::type* = nullptr>
+static std::shared_ptr<component::Container> CreateComponent(
+    id_t entity_id, const std::vector<Property> &properties) {
+    auto type_id = static_cast<uint32_t>(type);
+    auto ret = component::Create<type>(T());
+    if (component::Get<type>(ret)->Initialize(properties)) {
+        return std::move(ret);
+    }
+    LOGMSG(ERROR) << "Error while initializing class component "
+        << reflection::GetTypeName<std::integral_constant<Component,type>>() << " for entity id #" << entity_id;
+    return nullptr;
+}
+
 
 template<template <Component> class S,Component C>
 struct ComponentAdder {

@@ -179,7 +179,7 @@ public:
      * \return const const_data_type& the addition set
      *
      */
-    const SharedContainerConst<K,V>& GetLastPositiveCommit() {
+    auto GetLastPositiveCommit() -> typename std::result_of<decltype(&AsyncFrameData<SharedContainerConst<K,V>,HistorySize>::GetHead)(AsyncFrameData<SharedContainerConst<K,V>,HistorySize>)>::type {
         return forward_data.GetHead();
     }
 

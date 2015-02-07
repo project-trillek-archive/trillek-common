@@ -118,6 +118,15 @@ uint32_t Initialize<Component::Health>(bool& result, const std::vector<Property>
 }
 
 template<>
+std::shared_ptr<Container> Initialize<Component::Collidable>(const std::vector<Property> &properties) {
+    auto ret = component::Create<Component::Collidable>(physics::Collidable());
+    if (component::Get<Component::Collidable>(ret)->Initialize(properties)) {
+        return std::move(ret);
+    }
+    return nullptr;
+}
+
+template<>
 bool Initialize<Component::Movable>(bool& result, const std::vector<Property> &properties) {
     id_t entity_id;
     result = false;
@@ -137,9 +146,9 @@ bool Initialize<Component::Movable>(bool& result, const std::vector<Property> &p
     }
     if(movable) {
         if(!Has<Component::Interactable>(entity_id)) {
-            game.GetSystemComponent().Insert<Component::Interactable>(entity_id, Interaction(entity_id));
+            Insert<Component::Interactable>(entity_id, Interaction(entity_id));
         }
-        auto& act = game.GetSystemComponent().Get<Component::Interactable>(entity_id);
+        auto& act = Get<Component::Interactable>(entity_id);
         act.AddAction(Action::IA_MOVE);
     }
     return movable;
